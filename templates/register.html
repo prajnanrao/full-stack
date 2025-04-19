@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register - FoodhubXpress</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    .register-section {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(to right, #b1d7ee, #fceff9);
+      padding: 2rem;
+    }
+
+    .register-form {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 2rem;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 0 20px rgba(255, 182, 193, 0.2);
+    }
+
+    .register-form h2 {
+      text-align: center;
+      color: #ffb6c1;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      color: #fff;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      background-color: #1a1a1a;
+      color: #fff;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border: 1px solid #87ceeb;
+      box-shadow: 0 0 8px #87ceeb;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #87ceeb;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+      margin-top: 1rem;
+    }
+
+    .submit-btn:hover {
+      background-color: #76bddc;
+      box-shadow: 0 0 12px #87ceeb;
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 1rem;
+      color: #ffb6c1;
+    }
+
+    .login-link a {
+      color: #87ceeb;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="logo">
+      <img src="{{ url_for('static', filename='fx.jpg') }}" width="350" height="123">
+
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="menu.html">Menu</a></li>
+        <li><a href="place-order.html">Order</a></li>
+        <li><a href="track-order.html">Track Order</a></li>
+        <li><a href="review.html">Review</a></li>
+        <li><a href="login.html">Login</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <section class="register-section">
+    <form class="register-form">
+      <h2>Create Your Account</h2>
+
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" placeholder="Full Name" required/>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="Email" required/>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" placeholder="Phone number" required/>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Create Password</label>
+        <input type="password" id="password" placeholder="********" required/>
+      </div>
+
+      <div class="form-group">
+        <label for="confirm-password">Confirm Password</label>
+        <input type="password" id="confirm-password" placeholder="********" required/>
+      </div>
+
+      <button type="submit" class="submit-btn">Register</button>
+
+      <p class="login-link">Already have an account? <a href="login.html">Login here</a></p>
+    </form>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 FoodhubXpress. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>
