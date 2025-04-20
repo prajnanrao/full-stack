@@ -63,28 +63,78 @@
     <!-- Manage Restaurants -->
     <div id="manage-restaurants">
       <h2>Manage Restaurants</h2>
-      <form action="/admin/manage-restaurants" method="POST">
+      <form id="add-restaurant-form">
         <label for="name">Restaurant Name:</label>
-        <input type="text" name="name" required><br><br>
+        <input type="text" id="name" name="name" required><br><br>
         <label for="address">Restaurant Address:</label>
-        <input type="text" name="address" required><br><br>
-        <button type="submit">Add Restaurant</button>
+        <input type="text" id="address" name="address" required><br><br>
+        <label for="phone">Restaurant Phone:</label>
+        <input type="text" id="phone" name="phone" required><br><br>
+        <label for="cuisine_type">Cuisine Type:</label>
+        <input type="text" id="cuisine_type" name="cuisine_type" required><br><br>
+        <label for="rating">Restaurant Rating:</label>
+        <input type="number" id="rating" name="rating" step="0.1" max="5" min="0" required><br><br>
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city" required><br><br>
+        <label for="state">State:</label>
+        <input type="text" id="state" name="state" required><br><br>
+        <label for="pin_code">Pin Code:</label>
+        <input type="text" id="pin_code" name="pin_code" required><br><br>
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" required></textarea><br><br>
+        <button type="button" onclick="addRestaurant()">Add Restaurant</button>
       </form>
+
       <h3>Existing Restaurants</h3>
-      <table>
+      <table id="restaurants-table">
         <tr>
           <th>Restaurant Name</th>
           <th>Address</th>
+          <th>Phone</th>
+          <th>Cuisine Type</th>
+          <th>Rating</th>
+          <th>City</th>
+          <th>State</th>
+          <th>Pin Code</th>
+          <th>Description</th>
+          <th>Actions</th>
         </tr>
-        <!-- Populate this table dynamically using Flask -->
-        {% for restaurant in restaurants %}
-          <tr>
-            <td>{{ restaurant[1] }}</td>
-            <td>{{ restaurant[2] }}</td>
-          </tr>
-        {% endfor %}
+        <!-- Restaurant rows will be populated by JavaScript -->
       </table>
     </div>
+
+    <!-- Add Menu for Restaurant -->
+    <h3>Add Menu for Restaurant</h3>
+    <form id="add-menu-form">
+      <label for="restaurant-id">Restaurant ID:</label>
+      <input type="number" id="restaurant-id" name="restaurant-id" required><br><br>
+      <label for="item-name">Item Name:</label>
+      <input type="text" id="item-name" name="item-name" required><br><br>
+      <label for="menu-description">Description:</label>
+      <textarea id="menu-description" name="menu-description" required></textarea><br><br>
+      <label for="price">Price:</label>
+      <input type="number" id="price" name="price" step="0.01" required><br><br>
+      <label for="category">Category:</label>
+      <input type="text" id="category" name="category" required><br><br>
+      <label for="is-available">Available:</label>
+      <input type="checkbox" id="is-available" name="is-available"><br><br>
+      <label for="preparation-time">Preparation Time (in minutes):</label>
+      <input type="number" id="preparation-time" name="preparation-time" required><br><br>
+      <button type="button" onclick="addMenuItem()">Add Menu Item</button>
+    </form>
+
+    <!-- Manage Menus -->
+    <h3>Manage Menus</h3>
+    <table id="menu-table">
+      <tr>
+        <th>Item Name</th>
+        <th>Description</th>
+        <th>Price</th>
+        <th>Category</th>
+        <th>Actions</th>
+      </tr>
+      <!-- Menu rows will be populated by JavaScript -->
+    </table>
 
     <!-- Manage Orders -->
     <div id="manage-orders">
@@ -96,7 +146,6 @@
           <th>Status</th>
           <th>Action</th>
         </tr>
-        <!-- Populate this table dynamically using Flask -->
         {% for order in orders %}
           <tr>
             <td>{{ order[0] }}</td>
@@ -140,6 +189,391 @@
     </div>
 
   </div>
+
+  <div id="update-popup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:white; padding:20px; border:1px solid black; z-index:1000;">
+    <form id="update-restaurant-form">
+      <input type="hidden" id="update-restaurant-id">
+      <label for="update-name">Restaurant Name:</label>
+      <input type="text" id="update-name" required><br><br>
+      <label for="update-address">Restaurant Address:</label>
+      <input type="text" id="update-address" required><br><br>
+      <label for="update-phone">Restaurant Phone:</label>
+      <input type="text" id="update-phone" required><br><br>
+      <label for="update-cuisine_type">Cuisine Type:</label>
+      <input type="text" id="update-cuisine_type" required><br><br>
+      <label for="update-rating">Restaurant Rating:</label>
+      <input type="number" id="update-rating" step="0.1" max="5" min="0" required><br><br>
+      <label for="update-city">City:</label>
+      <input type="text" id="update-city" required><br><br>
+      <label for="update-state">State:</label>
+      <input type="text" id="update-state" required><br><br>
+      <label for="update-pin_code">Pin Code:</label>
+      <input type="text" id="update-pin_code" required><br><br>
+      <label for="update-description">Description:</label>
+      <textarea id="update-description" required></textarea><br><br>
+      <button type="button" onclick="updateRestaurant()">Save</button>
+      <button type="button" onclick="closeUpdatePopup()">Cancel</button>
+    </form>
+  </div>
+
+  <div id="update-menu-popup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:white; padding:20px; border:1px solid black; z-index:1000;">
+    <form id="update-menu-form">
+      <input type="hidden" id="update-menu-id">
+      <label for="update-item-name">Item Name:</label>
+      <input type="text" id="update-item-name" required><br><br>
+      <label for="update-menu-description">Description:</label>
+      <textarea id="update-menu-description" required></textarea><br><br>
+      <label for="update-price">Price:</label>
+      <input type="number" id="update-price" step="0.01" required><br><br>
+      <label for="update-category">Category:</label>
+      <input type="text" id="update-category" required><br><br>
+      <label for="update-is-available">Available:</label>
+      <input type="checkbox" id="update-is-available"><br><br>
+      <label for="update-preparation-time">Preparation Time (in minutes):</label>
+      <input type="number" id="update-preparation-time" required><br><br>
+      <button type="button" onclick="updateMenu()">Save</button>
+      <button type="button" onclick="closeUpdateMenuPopup()">Cancel</button>
+    </form>
+  </div>
+
+  <script>
+    // Fetch restaurant details and populate the table
+    fetch('/getRestaurant')
+      .then(response => response.json())  // Parse response as JSON
+      .then(data => {
+        console.log("Fetched restaurant data:", data);  // Log the fetched data
+        const table = document.getElementById('restaurants-table');
+        data.forEach(restaurant => {
+          const row = document.createElement('tr');
+          
+          // Create table cells for each property
+          const nameCell = document.createElement('td');
+          const addressCell = document.createElement('td');
+          const phoneCell = document.createElement('td');
+          const cuisineTypeCell = document.createElement('td');
+          const ratingCell = document.createElement('td');
+          const cityCell = document.createElement('td');
+          const stateCell = document.createElement('td');
+          const pinCodeCell = document.createElement('td');
+          const descriptionCell = document.createElement('td');
+          const actionsCell = document.createElement('td');
+          
+          nameCell.textContent = restaurant.name;  // Restaurant Name
+          addressCell.textContent = restaurant.address;  // Address
+          phoneCell.textContent = restaurant.phone;  // Phone
+          cuisineTypeCell.textContent = restaurant.cuisine_type;  // Cuisine Type
+          ratingCell.textContent = restaurant.rating;  // Rating
+          cityCell.textContent = restaurant.city;  // City
+          stateCell.textContent = restaurant.state;  // State
+          pinCodeCell.textContent = restaurant.Pin_code;  // Pin Code
+          descriptionCell.textContent = restaurant.description;  // Description
+          
+          // Add update and delete icons
+          const updateIcon = document.createElement('span');
+          updateIcon.textContent = '✏️';
+          updateIcon.style.cursor = 'pointer';
+          updateIcon.onclick = () => openUpdatePopup(restaurant);
+
+          const deleteIcon = document.createElement('span');
+          deleteIcon.textContent = '🗑️';
+          deleteIcon.style.cursor = 'pointer';
+          deleteIcon.onclick = () => deleteRestaurant(restaurant.restaurant_id);
+
+          actionsCell.appendChild(updateIcon);
+          actionsCell.appendChild(deleteIcon);
+
+          // Append each cell to the row
+          row.appendChild(nameCell);
+          row.appendChild(addressCell);
+          row.appendChild(phoneCell);
+          row.appendChild(cuisineTypeCell);
+          row.appendChild(ratingCell);
+          row.appendChild(cityCell);
+          row.appendChild(stateCell);
+          row.appendChild(pinCodeCell);
+          row.appendChild(descriptionCell);
+          row.appendChild(actionsCell);
+          
+          // Append row to the table
+          table.appendChild(row);
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching restaurant data:', error);
+        alert('Failed to load restaurant data.');
+      });
+
+    function addRestaurant() {
+      const formData = {
+        name: document.getElementById('name').value,
+        address: document.getElementById('address').value,
+        phone: document.getElementById('phone').value,
+        cuisine_type: document.getElementById('cuisine_type').value,
+        rating: document.getElementById('rating').value,
+        city: document.getElementById('city').value,
+        state: document.getElementById('state').value,
+        pin_code: document.getElementById('pin_code').value,
+        description: document.getElementById('description').value
+      };
+
+      fetch('/addRestaurant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to add restaurant.');
+      });
+    }
+
+    function openUpdatePopup(restaurant) {
+      const popup = document.getElementById('update-popup');
+      document.getElementById('update-name').value = restaurant.name;
+      document.getElementById('update-address').value = restaurant.address;
+      document.getElementById('update-phone').value = restaurant.phone;
+      document.getElementById('update-cuisine_type').value = restaurant.cuisine_type;
+      document.getElementById('update-rating').value = restaurant.rating;
+      document.getElementById('update-city').value = restaurant.city;
+      document.getElementById('update-state').value = restaurant.state;
+      document.getElementById('update-pin_code').value = restaurant.Pin_code;
+      document.getElementById('update-description').value = restaurant.description;
+      document.getElementById('update-restaurant-id').value = restaurant.restaurant_id;
+      popup.style.display = 'block';
+    }
+
+    function closeUpdatePopup() {
+      document.getElementById('update-popup').style.display = 'none';
+    }
+
+    function updateRestaurant() {
+      const formData = {
+        restaurant_id: document.getElementById('update-restaurant-id').value,
+        name: document.getElementById('update-name').value,
+        address: document.getElementById('update-address').value,
+        phone: document.getElementById('update-phone').value,
+        cuisine_type: document.getElementById('update-cuisine_type').value,
+        rating: document.getElementById('update-rating').value,
+        city: document.getElementById('update-city').value,
+        state: document.getElementById('update-state').value,
+        pin_code: document.getElementById('update-pin_code').value,
+        description: document.getElementById('update-description').value
+      };
+
+      fetch('/updateRestaurant', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update restaurant.');
+      });
+    }
+
+    function deleteRestaurant(restaurant_id) {
+      if (confirm('Are you sure you want to delete this restaurant?')) {
+        fetch('/deleteRestaurant', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ restaurant_id })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.message) {
+            alert(data.message);
+            location.reload();
+          } else {
+            alert('Error: ' + data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Failed to delete restaurant.');
+        });
+      }
+    }
+
+    function addMenuItem() {
+      const formData = {
+        restaurant_id: document.getElementById('restaurant-id').value,
+        item_name: document.getElementById('item-name').value,
+        description: document.getElementById('menu-description').value,
+        price: document.getElementById('price').value,
+        category: document.getElementById('category').value,
+        is_available: document.getElementById('is-available').checked,
+        preparation_time: document.getElementById('preparation-time').value
+      };
+
+      fetch('/admin/restaurant/' + formData.restaurant_id + '/menu/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message) {
+          alert(data.message);
+          // location.reload();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to add menu item.');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      fetch('/getMenuDetails')
+        .then(response => response.json())
+        .then(data => {
+          const menuTable = document.getElementById('menu-table');
+
+          data.forEach(menu => {
+            const row = document.createElement('tr');
+
+            const itemNameCell = document.createElement('td');
+            const descriptionCell = document.createElement('td');
+            const priceCell = document.createElement('td');
+            const categoryCell = document.createElement('td');
+            const actionsCell = document.createElement('td');
+
+            itemNameCell.textContent = menu.item_name;
+            descriptionCell.textContent = menu.description;
+            priceCell.textContent = `₹${menu.price}`;
+            categoryCell.textContent = menu.category;
+
+            // Add update and delete icons
+            const updateIcon = document.createElement('span');
+            updateIcon.textContent = '✏️';
+            updateIcon.style.cursor = 'pointer';
+            updateIcon.onclick = () => openUpdateMenuPopup(menu);
+
+            const deleteIcon = document.createElement('span');
+            deleteIcon.textContent = '🗑️';
+            deleteIcon.style.cursor = 'pointer';
+            deleteIcon.onclick = () => deleteMenu(menu.menu_id);
+
+            actionsCell.appendChild(updateIcon);
+            actionsCell.appendChild(deleteIcon);
+
+            row.appendChild(itemNameCell);
+            row.appendChild(descriptionCell);
+            row.appendChild(priceCell);
+            row.appendChild(categoryCell);
+            row.appendChild(actionsCell);
+
+            menuTable.appendChild(row);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching menu details:', error);
+          alert('Failed to load menu details.');
+        });
+    });
+
+    function openUpdateMenuPopup(menu) {
+      const popup = document.getElementById('update-menu-popup');
+      document.getElementById('update-menu-id').value = menu.menu_id;
+      document.getElementById('update-item-name').value = menu.item_name;
+      document.getElementById('update-menu-description').value = menu.description;
+      document.getElementById('update-price').value = menu.price;
+      document.getElementById('update-category').value = menu.category;
+      document.getElementById('update-is-available').checked = menu.is_available;
+      document.getElementById('update-preparation-time').value = menu.preparation_time;
+      popup.style.display = 'block';
+    }
+
+    function closeUpdateMenuPopup() {
+      document.getElementById('update-menu-popup').style.display = 'none';
+    }
+
+    function updateMenu() {
+      const formData = {
+        menu_id: document.getElementById('update-menu-id').value,
+        item_name: document.getElementById('update-item-name').value,
+        description: document.getElementById('update-menu-description').value,
+        price: document.getElementById('update-price').value,
+        category: document.getElementById('update-category').value,
+        is_available: document.getElementById('update-is-available').checked,
+        preparation_time: document.getElementById('update-preparation-time').value
+      };
+
+      fetch('/updateMenu', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update menu item.');
+      });
+    }
+
+    function deleteMenu(menu_id) {
+      if (confirm('Are you sure you want to delete this menu item?')) {
+        fetch('/deleteMenu', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ menu_id })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.message) {
+            alert(data.message);
+            location.reload();
+          } else {
+            alert('Error: ' + data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Failed to delete menu item.');
+        });
+      }
+    }
+  </script>
 
 </body>
 </html>

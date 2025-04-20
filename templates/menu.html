@@ -114,75 +114,6 @@
   <section class="menu-section">
     <h2>Available Restaurants & Menus</h2>
     <div class="restaurant-list">
-
-      <!-- Indian Spice -->
-      <div class="restaurant">
-        <h3>Indian Spice</h3>
-        <div class="category-columns">
-          <div class="category">
-            <h4>Veg</h4>
-            <ul>
-              <li>Paneer Butter Masala <span>₹249</span><button class="btn-add" onclick="addToOrder('Paneer Butter Masala', 249)">Add</button></li>
-              <li>Dal Tadka <span>₹159</span><button class="btn-add" onclick="addToOrder('Dal Tadka', 159)">Add</button></li>
-              <li>Chole Bhature <span>₹179</span><button class="btn-add" onclick="addToOrder('Chole Bhature', 179)">Add</button></li>
-              <li>Veg Biryani <span>₹199</span><button class="btn-add" onclick="addToOrder('Veg Biryani', 199)">Add</button></li>
-              <li>Palak Paneer <span>₹229</span><button class="btn-add" onclick="addToOrder('Palak Paneer', 229)">Add</button></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- Pizza Nation -->
-      <div class="restaurant">
-        <h3>Pizza Nation</h3>
-        <div class="category-columns">
-          <div class="category">
-            <h4>Pizza</h4>
-            <ul>
-              <li>Margherita <span>₹399</span><button class="btn-add" onclick="addToOrder('Margherita', 399)">Add</button></li>
-              <li>Pepperoni <span>₹499</span><button class="btn-add" onclick="addToOrder('Pepperoni', 499)">Add</button></li>
-              <li>Veg Supreme <span>₹499</span><button class="btn-add" onclick="addToOrder('Veg Supreme', 499)">Add</button></li>
-              <li>Tandoori Paneer <span>₹549</span><button class="btn-add" onclick="addToOrder('Tandoori Paneer', 549)">Add</button></li>
-              <li>Cheese Burst <span>₹479</span><button class="btn-add" onclick="addToOrder('Cheese Burst', 479)">Add</button></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- Sweet Carvings -->
-      <div class="restaurant">
-        <h3>Sweet Carvings</h3>
-        <div class="category-columns">
-          <div class="category">
-            <h4>Desserts</h4>
-            <ul>
-              <li>Chocolate Lava Cake <span>₹199</span><button class="btn-add" onclick="addToOrder('Chocolate Lava Cake', 199)">Add</button></li>
-              <li>Gulab Jamun <span>₹129</span><button class="btn-add" onclick="addToOrder('Gulab Jamun', 129)">Add</button></li>
-              <li>Ras Malai <span>₹149</span><button class="btn-add" onclick="addToOrder('Ras Malai', 149)">Add</button></li>
-              <li>Brownie Fudge <span>₹189</span><button class="btn-add" onclick="addToOrder('Brownie Fudge', 189)">Add</button></li>
-              <li>Ice Cream Sundae <span>₹159</span><button class="btn-add" onclick="addToOrder('Ice Cream Sundae', 159)">Add</button></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- New Restaurant: Burger Shack -->
-      <div class="restaurant">
-        <h3>Burger Shack</h3>
-        <div class="category-columns">
-          <div class="category">
-            <h4>Burgers</h4>
-            <ul>
-              <li>Cheese Burger <span>₹199</span><button class="btn-add" onclick="addToOrder('Cheese Burger', 199)">Add</button></li>
-              <li>Veg Burger <span>₹149</span><button class="btn-add" onclick="addToOrder('Veg Burger', 149)">Add</button></li>
-              <li>Aloo Tikki Burger <span>₹229</span><button class="btn-add" onclick="addToOrder('Aloo Tikki Burger', 229)">Add</button></li>
-              <li>Double Cheese Burger <span>₹299</span><button class="btn-add" onclick="addToOrder('Double Cheese Burger', 299)">Add</button></li>
-              <li>Cheesy Nacho Burger <span>₹259</span><button class="btn-add" onclick="addToOrder('Cheesy Nacho Burger', 259)">Add</button></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
     </div>
   </section>
 
@@ -205,6 +136,56 @@
       // Redirect to place-order page after adding the item
       window.location.href = "place-order.html";
     }
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      fetch('/getRestaurantsWithMenus')
+        .then(response => response.json())
+        .then(data => {
+          const restaurantList = document.querySelector('.restaurant-list');
+          restaurantList.innerHTML = ''; // Clear existing content
+
+          data.forEach(restaurant => {
+            const restaurantDiv = document.createElement('div');
+            restaurantDiv.classList.add('restaurant');
+
+            const restaurantName = document.createElement('h3');
+            restaurantName.textContent = restaurant.name;
+            restaurantDiv.appendChild(restaurantName);
+
+            const categoryColumns = document.createElement('div');
+            categoryColumns.classList.add('category-columns');
+
+            restaurant.menus.forEach(menu => {
+              const categoryDiv = document.createElement('div');
+              categoryDiv.classList.add('category');
+
+              const categoryName = document.createElement('h4');
+              categoryName.textContent = menu.category;
+              categoryDiv.appendChild(categoryName);
+
+              const menuList = document.createElement('ul');
+
+              menu.items.forEach(item => {
+                const menuItem = document.createElement('li');
+                menuItem.innerHTML = `${item.item_name} <span>₹${item.price}</span><button class="btn-add" onclick="addToOrder('${item.item_name}', ${item.price})">Add</button>`;
+                menuList.appendChild(menuItem);
+              });
+
+              categoryDiv.appendChild(menuList);
+              categoryColumns.appendChild(categoryDiv);
+            });
+
+            restaurantDiv.appendChild(categoryColumns);
+            restaurantList.appendChild(restaurantDiv);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching restaurant menus:', error);
+          alert('Failed to load restaurant menus.');
+        });
+    });
   </script>
 </body>
 </html>
