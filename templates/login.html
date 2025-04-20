@@ -100,12 +100,12 @@
     </div>
     <nav>
       <ul class="nav-links">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="menu.html">Menu</a></li>
-        <li><a href="place-order.html">Order</a></li>
-        <li><a href="track-order.html">Track Order</a></li>
-        <li><a href="review.html">Review</a></li>
-        <li><a href="register.html">Register</a></li>
+        <li><a href="{{ url_for('index') }}">Home</a></li>
+        <li><a href="{{ url_for('menu') }}">Menu</a></li>
+        <li><a href="{{ url_for('placeOrder') }}">Order</a></li>
+        <li><a href="{{ url_for('trackOrder') }}">Track Order</a></li>
+        <li><a href="{{ url_for('review') }}">Review</a></li>
+        <li><a href="{{ url_for('login') }}" class="active">Login</a></li>
       </ul>
     </nav>
   </header>
@@ -126,7 +126,7 @@
 
       <button type="submit" class="submit-btn">Login</button>
 
-      <p class="register-link">Don't have an account? <a href="register.html">Register here</a></p>
+      <p class="register-link">Don't have an account? <a href="{{ url_for('register') }}" >Register here</a></p>
     </form>
   </section>
 

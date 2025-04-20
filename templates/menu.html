@@ -101,12 +101,12 @@
     </div>
     <nav>
       <ul class="nav-links">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="menu.html" class="active">Menu</a></li>
-        <li><a href="place-order.html">Order</a></li>
-        <li><a href="track-order.html">Track Order</a></li>
-        <li><a href="review.html">Review</a></li>
-        <li><a href="login.html">Login</a></li>
+        <li><a href="{{ url_for('index') }}">Home</a></li>
+        <li><a href="{{ url_for('menu') }}" class="active">Menu</a></li>
+        <li><a href="{{ url_for('placeOrder') }}">Order</a></li>
+        <li><a href="{{ url_for('trackOrder') }}">Track Order</a></li>
+        <li><a href="{{ url_for('review') }}">Review</a></li>
+        <li><a href="{{ url_for('login') }}">Login</a></li>
       </ul>
     </nav>
   </header>

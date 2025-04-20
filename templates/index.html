@@ -76,16 +76,16 @@
 
     /* Hero Section */
     .hero {
-    background-image: url("/static/1fx.jpg");
-    background-size: cover;
-    background-position: center;
-    text-align: center;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 1rem;
-}
+        background-image: url('./static/1fx.jpg');
+        background-size: cover;
+        background-position: center;
+        text-align: center;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 1rem;
+    }
 
     .hero-content {
         background: rgba(0, 0, 0, 0.6);
@@ -169,12 +169,12 @@
     </div>
     <nav>
       <ul class="nav-links">
-        <li><a href="index.html" class="active">Home</a></li>
-        <li><a href="menu.html">Menu</a></li>
-        <li><a href="place-order.html">Order</a></li>
-        <li><a href="track-order.html">Track Order</a></li>
-        <li><a href="review.html">Review</a></li>
-        <li><a href="login.html">Login</a></li>
+        <li><a href="{{ url_for('index') }}" class="active">Home</a></li>
+        <li><a href="{{ url_for('menu') }}">Menu</a></li>
+        <li><a href="{{ url_for('placeOrder') }}">Order</a></li>
+        <li><a href="{{ url_for('trackOrder') }}">Track Order</a></li>
+        <li><a href="{{ url_for('review') }}">Review</a></li>
+        <li><a href="{{ url_for('login') }}">Login</a></li>
       </ul>
     </nav>
   </header>
@@ -183,7 +183,7 @@
     <div class="hero-content">
       <h1>FoodhubXpress</h1>
       <p class="tagline">Instant Meals, Infinite Joy</p>
-      <a href="register.html" class="btn-primary">Register Now</a>
+      <a href="register" class="btn-primary">Register Now</a>
     </div>
   </section>
 

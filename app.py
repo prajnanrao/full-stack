@@ -7,7 +7,7 @@ app = Flask(__name__)
 # Database configuration
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'Prajna@9623'  # Replace with your password
+app.config['MYSQL_PASSWORD'] = ''  # Replace with your password
 app.config['MYSQL_DB'] = 'Foodhub'
 mysql = MySQL(app)
 
@@ -51,6 +51,30 @@ def logout():
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/menu')
+def menu():
+    return render_template('menu.html')
+
+@app.route('/place-order')
+def placeOrder():
+    return render_template('place-order.html')
+
+@app.route('/track-order')
+def trackOrder():
+    return render_template('track-order.html')
+
+@app.route('/review')
+def review():
+    return render_template('review.html')
+
+@app.route('/register')
+def register():
+    return render_template('register.html')
+
+@app.route('/admin')
+def admin():
+    return render_template('admin.html')
 
 @app.route('/manage-restaurants', methods=['GET', 'POST'])
 @login_required  # Ensure only logged-in users can access this route
