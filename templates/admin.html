@@ -4,304 +4,430 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-    }
-    h1 {
+    h1, h2, h3 {
+      color: #ffb6c1;
       text-align: center;
       margin-top: 20px;
+      margin-bottom: 1.5rem;
     }
-    nav {
+    nav.admin-nav {
       display: flex;
-      justify-content: space-around;
-      margin: 20px;
+      justify-content: center;
+      gap: 20px;
+      margin: 30px 0;
+      flex-wrap: wrap;
     }
-    nav a {
+    nav.admin-nav a {
       text-decoration: none;
-      padding: 10px;
-      background-color: #007bff;
-      color: white;
-      border-radius: 5px;
-      font-size: 16px;
+      padding: 10px 20px;
+      background-color: #87ceeb;
+      color: black;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: bold;
+      transition: 0.3s ease;
     }
-    nav a:hover {
-      background-color: #0056b3;
+    nav.admin-nav a:hover {
+      background-color: #76bddc;
+      box-shadow: 0 0 12px #87ceeb;
     }
     .content {
-      margin-top: 20px;
+      margin: 20px auto;
+      padding: 1rem;
+      max-width: 1200px;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 12px;
+      color: #fff;
     }
     form {
       margin-bottom: 20px;
+      background-color: rgba(26, 26, 26, 0.8);
+      padding: 1.5rem;
+      border-radius: 8px;
+    }
+    label {
+      display: block;
+      color: #fff;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="tel"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      background-color: #333;
+      color: #fff;
+      outline: none;
+      box-sizing: border-box;
+      margin-bottom: 1rem;
+    }
+    input[type="checkbox"] {
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    input[type="tel"]:focus,
+    textarea:focus,
+    select:focus {
+      border: 1px solid #87ceeb;
+      box-shadow: 0 0 8px #87ceeb;
+    }
+    button,
+    .btn {
+      background-color: #87ceeb;
+      color: black;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      transition: 0.3s ease;
+      margin-top: 1rem;
+    }
+    button:hover,
+    .btn:hover {
+      background-color: #76bddc;
+      box-shadow: 0 0 12px #87ceeb;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
+      color: #ccc;
     }
     table, th, td {
-      border: 1px solid black;
+      border: 1px solid #555;
     }
     th, td {
       padding: 10px;
       text-align: left;
     }
+    th {
+      background-color: #333;
+      color: #ffb6c1;
+    }
+    tr:nth-child(even) {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    td span {
+      margin: 0 5px;
+      cursor: pointer;
+    }
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #222;
+      padding: 20px;
+      border: 1px solid #87ceeb;
+      z-index: 1000;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 10px;
+      box-shadow: 0 0 25px rgba(135, 206, 235, 0.3);
+    }
+    .popup form {
+      background-color: transparent;
+      padding: 0;
+      box-shadow: none;
+    }
+    .popup button {
+      margin-right: 10px;
+    }
+    #update-popup {}
+    #update-menu-popup {}
   </style>
 </head>
 <body>
+  
+  <header class="navbar">
+    <div class="logo">
+      <img src="{{ url_for('static', filename='fx.jpg') }}" width="350" height="123">
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('index') }}">View Site</a></li>
+        {% if current_user.is_authenticated %}
+          <li>
+            <span style="color: #ccc; font-size: 1.5rem; font-weight: normal; margin-right: 15px;">Welcome, {{ current_user.name }}</span>
+          </li>
+          <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        {% else %}
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+          <li><a href="{{ url_for('register') }}">Register</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
   <h1>Admin Dashboard</h1>
 
-  <!-- Navigation Bar -->
-  <nav>
+  <nav class="admin-nav">
     <a href="#manage-restaurants">Manage Restaurants</a>
+    <a href="#manage-menus-section">Manage Menus</a>
     <a href="#manage-orders">Manage Orders</a>
     <a href="#track-order">Track Order</a>
   </nav>
 
   <div class="content">
 
-    <!-- Manage Restaurants -->
-    <div id="manage-restaurants">
+    <section id="manage-restaurants">
       <h2>Manage Restaurants</h2>
       <form id="add-restaurant-form">
         <label for="name">Restaurant Name:</label>
-        <input type="text" id="name" name="name" required><br><br>
+        <input type="text" id="name" name="name" required>
         <label for="address">Restaurant Address:</label>
-        <input type="text" id="address" name="address" required><br><br>
+        <input type="text" id="address" name="address" required>
         <label for="phone">Restaurant Phone:</label>
-        <input type="text" id="phone" name="phone" required><br><br>
+        <input type="text" id="phone" name="phone" required>
         <label for="cuisine_type">Cuisine Type:</label>
-        <input type="text" id="cuisine_type" name="cuisine_type" required><br><br>
+        <input type="text" id="cuisine_type" name="cuisine_type" required>
         <label for="rating">Restaurant Rating:</label>
-        <input type="number" id="rating" name="rating" step="0.1" max="5" min="0" required><br><br>
+        <input type="number" id="rating" name="rating" step="0.1" max="5" min="0" required>
         <label for="city">City:</label>
-        <input type="text" id="city" name="city" required><br><br>
+        <input type="text" id="city" name="city" required>
         <label for="state">State:</label>
-        <input type="text" id="state" name="state" required><br><br>
+        <input type="text" id="state" name="state" required>
         <label for="pin_code">Pin Code:</label>
-        <input type="text" id="pin_code" name="pin_code" required><br><br>
+        <input type="text" id="pin_code" name="pin_code" required>
         <label for="description">Description:</label>
-        <textarea id="description" name="description" required></textarea><br><br>
+        <textarea id="description" name="description" required></textarea>
         <button type="button" onclick="addRestaurant()">Add Restaurant</button>
       </form>
 
       <h3>Existing Restaurants</h3>
       <table id="restaurants-table">
-        <tr>
-          <th>Restaurant Name</th>
-          <th>Address</th>
-          <th>Phone</th>
-          <th>Cuisine Type</th>
-          <th>Rating</th>
-          <th>City</th>
-          <th>State</th>
-          <th>Pin Code</th>
-          <th>Description</th>
-          <th>Actions</th>
-        </tr>
-        <!-- Restaurant rows will be populated by JavaScript -->
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Phone</th>
+            <th>Cuisine</th>
+            <th>Rating</th>
+            <th>City</th>
+            <th>State</th>
+            <th>Pin</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
       </table>
-    </div>
+    </section>
 
-    <!-- Add Menu for Restaurant -->
-    <h3>Add Menu for Restaurant</h3>
-    <form id="add-menu-form">
-      <label for="restaurant-id">Restaurant ID:</label>
-      <input type="number" id="restaurant-id" name="restaurant-id" required><br><br>
-      <label for="item-name">Item Name:</label>
-      <input type="text" id="item-name" name="item-name" required><br><br>
-      <label for="menu-description">Description:</label>
-      <textarea id="menu-description" name="menu-description" required></textarea><br><br>
-      <label for="price">Price:</label>
-      <input type="number" id="price" name="price" step="0.01" required><br><br>
-      <label for="category">Category:</label>
-      <input type="text" id="category" name="category" required><br><br>
-      <label for="is-available">Available:</label>
-      <input type="checkbox" id="is-available" name="is-available"><br><br>
-      <label for="preparation-time">Preparation Time (in minutes):</label>
-      <input type="number" id="preparation-time" name="preparation-time" required><br><br>
-      <button type="button" onclick="addMenuItem()">Add Menu Item</button>
-    </form>
+    <section id="manage-menus-section">
+        <h2>Manage Menus</h2>
+        
+        <h3>Add Menu Item</h3>
+        <form id="add-menu-form">
+          <label for="restaurant-id">Restaurant ID:</label>
+          <input type="number" id="restaurant-id" name="restaurant-id" required>
+          <label for="item-name">Item Name:</label>
+          <input type="text" id="item-name" name="item-name" required>
+          <label for="menu-description">Description:</label>
+          <textarea id="menu-description" name="menu-description" required></textarea>
+          <label for="price">Price:</label>
+          <input type="number" id="price" name="price" step="0.01" required>
+          <label for="category">Category:</label>
+          <input type="text" id="category" name="category" required>
+          <label for="is-available">Available:</label>
+          <input type="checkbox" id="is-available" name="is-available" checked>
+          <label for="preparation-time">Preparation Time (mins):</label>
+          <input type="number" id="preparation-time" name="preparation-time" required>
+          <button type="button" onclick="addMenuItem()">Add Menu Item</button>
+        </form>
 
-    <!-- Manage Menus -->
-    <h3>Manage Menus</h3>
-    <table id="menu-table">
-      <tr>
-        <th>Item Name</th>
-        <th>Description</th>
-        <th>Price</th>
-        <th>Category</th>
-        <th>Actions</th>
-      </tr>
-      <!-- Menu rows will be populated by JavaScript -->
-    </table>
+        <h3>Existing Menu Items</h3>
+        <table id="menu-table">
+          <thead>
+            <tr>
+                <th>Restaurant ID</th>
+                <th>Item Name</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Category</th>
+                <th>Available</th>
+                <th>Prep Time</th>
+                <th>Actions</th>
+            </tr>
+          </thead>
+           <tbody>
+           </tbody>
+        </table>
+    </section>
 
-    <!-- Manage Orders -->
-    <div id="manage-orders">
+    <section id="manage-orders">
       <h2>Manage Orders</h2>
       <table>
-        <tr>
-          <th>Order ID</th>
-          <th>Customer Name</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer ID</th>
+            <th>Restaurant ID</th>
+            <th>Status</th>
+            <th>Placed Time</th>
+            <th>Total Price</th>
+            <th>Delivery Address</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
         {% for order in orders %}
           <tr>
             <td>{{ order[0] }}</td>
             <td>{{ order[1] }}</td>
-            <td>{{ order[3] }}</td>
+            <td>{{ order[2] }}</td>
+            <td>{{ order[4] }}</td>
+            <td>{{ order[5] }}</td>
+            <td>₹{{ order[9] }}</td>
+            <td>{{ order[10] }}</td>
             <td>
-              <form action="/admin/update-order-status" method="POST">
+              <form action="/update-order-status" method="POST" style="background: none; padding: 0; margin:0; box-shadow: none;">
                 <input type="hidden" name="order_id" value="{{ order[0] }}">
                 <select name="status">
-                  <option value="Order Placed" {% if order[3] == 'Order Placed' %}selected{% endif %}>Order Placed</option>
-                  <option value="Preparing" {% if order[3] == 'Preparing' %}selected{% endif %}>Preparing</option>
-                  <option value="Out for Delivery" {% if order[3] == 'Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
-                  <option value="Delivered" {% if order[3] == 'Delivered' %}selected{% endif %}>Delivered</option>
+                  <option value="placed" {% if order[4] == 'placed' %}selected{% endif %}>Placed</option>
+                  <option value="preparing" {% if order[4] == 'preparing' %}selected{% endif %}>Preparing</option>
+                  <option value="out_for_delivery" {% if order[4] == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>
+                  <option value="delivered" {% if order[4] == 'delivered' %}selected{% endif %}>Delivered</option>
+                  <option value="cancelled" {% if order[4] == 'cancelled' %}selected{% endif %}>Cancelled</option>
                 </select>
-                <button type="submit">Update Status</button>
+                <button type="submit">Update</button>
               </form>
             </td>
           </tr>
+        {% else %}
+            <tr><td colspan="8">No orders found.</td></tr>
         {% endfor %}
+        </tbody>
       </table>
-    </div>
+    </section>
 
-    <!-- Track Order -->
-    <div id="track-order">
-      <h2>Track Order</h2>
+    <section id="track-order">
+      <h2>Track Specific Order</h2>
       <form action="/admin/track-order" method="POST">
-        <label for="order_id">Enter Order ID:</label>
-        <input type="text" name="order_id" required>
+        <label for="track_order_id">Enter Order ID:</label>
+        <input type="text" id="track_order_id" name="order_id" required>
         <button type="submit">Track</button>
       </form>
       {% if order %}
         <h3>Order Details</h3>
-        <p>Order ID: {{ order[0] }}</p>
-        <p>Customer Name: {{ order[1] }}</p>
-        <p>Restaurant: {{ order[2] }}</p>
-        <p>Status: {{ order[3] }}</p>
-        <p>Total Price: ₹{{ order[4] }}</p>
+        <p>Order ID: {{ order.order_id }}</p>
+        <p>Customer ID: {{ order.customer_id }}</p>
+        <p>Restaurant ID: {{ order.restaurant_id }}</p>
+        <p>Status: {{ order.order_status }}</p>
+        <p>Total Price: ₹{{ order.total_price }}</p>
       {% elif order is not none %}
-        <p>Sorry, we could not find an order with this ID. Please check and try again.</p>
+        <p>Could not find order with the specified ID.</p>
       {% endif %}
-    </div>
+    </section>
 
   </div>
 
-  <div id="update-popup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:white; padding:20px; border:1px solid black; z-index:1000;">
+  <div id="update-popup" class="popup">
+    <h2>Update Restaurant</h2>
     <form id="update-restaurant-form">
       <input type="hidden" id="update-restaurant-id">
       <label for="update-name">Restaurant Name:</label>
-      <input type="text" id="update-name" required><br><br>
+      <input type="text" id="update-name" required>
       <label for="update-address">Restaurant Address:</label>
-      <input type="text" id="update-address" required><br><br>
+      <input type="text" id="update-address" required>
       <label for="update-phone">Restaurant Phone:</label>
-      <input type="text" id="update-phone" required><br><br>
+      <input type="text" id="update-phone" required>
       <label for="update-cuisine_type">Cuisine Type:</label>
-      <input type="text" id="update-cuisine_type" required><br><br>
+      <input type="text" id="update-cuisine_type" required>
       <label for="update-rating">Restaurant Rating:</label>
-      <input type="number" id="update-rating" step="0.1" max="5" min="0" required><br><br>
+      <input type="number" id="update-rating" step="0.1" max="5" min="0" required>
       <label for="update-city">City:</label>
-      <input type="text" id="update-city" required><br><br>
+      <input type="text" id="update-city" required>
       <label for="update-state">State:</label>
-      <input type="text" id="update-state" required><br><br>
+      <input type="text" id="update-state" required>
       <label for="update-pin_code">Pin Code:</label>
-      <input type="text" id="update-pin_code" required><br><br>
+      <input type="text" id="update-pin_code" required>
       <label for="update-description">Description:</label>
-      <textarea id="update-description" required></textarea><br><br>
-      <button type="button" onclick="updateRestaurant()">Save</button>
-      <button type="button" onclick="closeUpdatePopup()">Cancel</button>
+      <textarea id="update-description" required></textarea>
+      <button type="button" onclick="updateRestaurant()">Save Changes</button>
+      <button type="button" onclick="closeUpdatePopup()" class="btn-secondary">Cancel</button>
     </form>
   </div>
 
-  <div id="update-menu-popup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:white; padding:20px; border:1px solid black; z-index:1000;">
+  <div id="update-menu-popup" class="popup">
+    <h2>Update Menu Item</h2>
     <form id="update-menu-form">
       <input type="hidden" id="update-menu-id">
-      <label for="update-item-name">Item Name:</label>
-      <input type="text" id="update-item-name" required><br><br>
+       <label for="update-item-name">Item Name:</label>
+      <input type="text" id="update-item-name" required>
       <label for="update-menu-description">Description:</label>
-      <textarea id="update-menu-description" required></textarea><br><br>
+      <textarea id="update-menu-description" required></textarea>
       <label for="update-price">Price:</label>
-      <input type="number" id="update-price" step="0.01" required><br><br>
+      <input type="number" id="update-price" step="0.01" required>
       <label for="update-category">Category:</label>
-      <input type="text" id="update-category" required><br><br>
+      <input type="text" id="update-category" required>
       <label for="update-is-available">Available:</label>
-      <input type="checkbox" id="update-is-available"><br><br>
-      <label for="update-preparation-time">Preparation Time (in minutes):</label>
-      <input type="number" id="update-preparation-time" required><br><br>
-      <button type="button" onclick="updateMenu()">Save</button>
-      <button type="button" onclick="closeUpdateMenuPopup()">Cancel</button>
+      <input type="checkbox" id="update-is-available"> <br>
+      <label for="update-preparation-time">Preparation Time (mins):</label>
+      <input type="number" id="update-preparation-time" required>
+      <button type="button" onclick="updateMenu()">Save Changes</button>
+      <button type="button" onclick="closeUpdateMenuPopup()" class="btn-secondary">Cancel</button>
     </form>
   </div>
 
   <script>
-    // Fetch restaurant details and populate the table
-    fetch('/getRestaurant')
-      .then(response => response.json())  // Parse response as JSON
-      .then(data => {
-        console.log("Fetched restaurant data:", data);  // Log the fetched data
-        const table = document.getElementById('restaurants-table');
-        data.forEach(restaurant => {
-          const row = document.createElement('tr');
-          
-          // Create table cells for each property
-          const nameCell = document.createElement('td');
-          const addressCell = document.createElement('td');
-          const phoneCell = document.createElement('td');
-          const cuisineTypeCell = document.createElement('td');
-          const ratingCell = document.createElement('td');
-          const cityCell = document.createElement('td');
-          const stateCell = document.createElement('td');
-          const pinCodeCell = document.createElement('td');
-          const descriptionCell = document.createElement('td');
-          const actionsCell = document.createElement('td');
-          
-          nameCell.textContent = restaurant.name;  // Restaurant Name
-          addressCell.textContent = restaurant.address;  // Address
-          phoneCell.textContent = restaurant.phone;  // Phone
-          cuisineTypeCell.textContent = restaurant.cuisine_type;  // Cuisine Type
-          ratingCell.textContent = restaurant.rating;  // Rating
-          cityCell.textContent = restaurant.city;  // City
-          stateCell.textContent = restaurant.state;  // State
-          pinCodeCell.textContent = restaurant.Pin_code;  // Pin Code
-          descriptionCell.textContent = restaurant.description;  // Description
-          
-          // Add update and delete icons
-          const updateIcon = document.createElement('span');
-          updateIcon.textContent = '✏️';
-          updateIcon.style.cursor = 'pointer';
-          updateIcon.onclick = () => openUpdatePopup(restaurant);
+    function loadRestaurants() {
+        fetch('/getRestaurant')
+          .then(response => response.json())
+          .then(data => {
+            console.log("Fetched restaurant data:", data);
+            const tableBody = document.querySelector('#restaurants-table tbody');
+            tableBody.innerHTML = '';
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="10">No restaurants found.</td></tr>';
+                return;
+            }
+            data.forEach(restaurant => {
+              const row = tableBody.insertRow();
+              
+              row.insertCell().textContent = restaurant.name;
+              row.insertCell().textContent = restaurant.address;
+              row.insertCell().textContent = restaurant.phone;
+              row.insertCell().textContent = restaurant.cuisine_type;
+              row.insertCell().textContent = restaurant.rating;
+              row.insertCell().textContent = restaurant.city;
+              row.insertCell().textContent = restaurant.state;
+              row.insertCell().textContent = restaurant.Pin_code;
+              row.insertCell().textContent = restaurant.description;
+              
+              const actionsCell = row.insertCell();
+              const updateIcon = document.createElement('span');
+              updateIcon.textContent = '✏️';
+              updateIcon.onclick = () => openUpdatePopup(restaurant);
+              actionsCell.appendChild(updateIcon);
 
-          const deleteIcon = document.createElement('span');
-          deleteIcon.textContent = '🗑️';
-          deleteIcon.style.cursor = 'pointer';
-          deleteIcon.onclick = () => deleteRestaurant(restaurant.restaurant_id);
-
-          actionsCell.appendChild(updateIcon);
-          actionsCell.appendChild(deleteIcon);
-
-          // Append each cell to the row
-          row.appendChild(nameCell);
-          row.appendChild(addressCell);
-          row.appendChild(phoneCell);
-          row.appendChild(cuisineTypeCell);
-          row.appendChild(ratingCell);
-          row.appendChild(cityCell);
-          row.appendChild(stateCell);
-          row.appendChild(pinCodeCell);
-          row.appendChild(descriptionCell);
-          row.appendChild(actionsCell);
-          
-          // Append row to the table
-          table.appendChild(row);
-        });
-      })
-      .catch(error => {
-        console.error('Error fetching restaurant data:', error);
-        alert('Failed to load restaurant data.');
-      });
+              const deleteIcon = document.createElement('span');
+              deleteIcon.textContent = '🗑️';
+              deleteIcon.onclick = () => deleteRestaurant(restaurant.restaurant_id);
+              actionsCell.appendChild(deleteIcon);
+            });
+          })
+          .catch(error => {
+            console.error('Error fetching restaurant data:', error);
+            alert('Failed to load restaurant data.');
+             const tableBody = document.querySelector('#restaurants-table tbody');
+             tableBody.innerHTML = '<tr><td colspan="10">Error loading data.</td></tr>';
+          });
+    }
 
     function addRestaurant() {
       const formData = {
@@ -315,6 +441,11 @@
         pin_code: document.getElementById('pin_code').value,
         description: document.getElementById('description').value
       };
+      
+      if (!formData.name || !formData.address) {
+          alert('Restaurant Name and Address are required.');
+          return;
+      }
 
       fetch('/addRestaurant', {
         method: 'POST',
@@ -327,9 +458,10 @@
       .then(data => {
         if (data.message) {
           alert(data.message);
-          location.reload();
+          document.getElementById('add-restaurant-form').reset();
+          loadRestaurants();
         } else {
-          alert('Error: ' + data.error);
+          alert('Error: ' + (data.error || 'Unknown error'));
         }
       })
       .catch(error => {
@@ -340,6 +472,7 @@
 
     function openUpdatePopup(restaurant) {
       const popup = document.getElementById('update-popup');
+      document.getElementById('update-restaurant-id').value = restaurant.restaurant_id;
       document.getElementById('update-name').value = restaurant.name;
       document.getElementById('update-address').value = restaurant.address;
       document.getElementById('update-phone').value = restaurant.phone;
@@ -349,7 +482,6 @@
       document.getElementById('update-state').value = restaurant.state;
       document.getElementById('update-pin_code').value = restaurant.Pin_code;
       document.getElementById('update-description').value = restaurant.description;
-      document.getElementById('update-restaurant-id').value = restaurant.restaurant_id;
       popup.style.display = 'block';
     }
 
@@ -382,9 +514,10 @@
       .then(data => {
         if (data.message) {
           alert(data.message);
-          location.reload();
+          closeUpdatePopup();
+          loadRestaurants();
         } else {
-          alert('Error: ' + data.error);
+          alert('Error: ' + (data.error || 'Unknown error'));
         }
       })
       .catch(error => {
@@ -394,7 +527,7 @@
     }
 
     function deleteRestaurant(restaurant_id) {
-      if (confirm('Are you sure you want to delete this restaurant?')) {
+      if (confirm('Are you sure you want to delete this restaurant? This may also affect related menus and orders.')) {
         fetch('/deleteRestaurant', {
           method: 'DELETE',
           headers: {
@@ -406,9 +539,9 @@
         .then(data => {
           if (data.message) {
             alert(data.message);
-            location.reload();
+            loadRestaurants();
           } else {
-            alert('Error: ' + data.error);
+            alert('Error: ' + (data.error || 'Unknown error'));
           }
         })
         .catch(error => {
@@ -418,9 +551,50 @@
       }
     }
 
+    function loadMenus() {
+        fetch('/getMenuDetails')
+            .then(response => response.json())
+            .then(data => {
+                const menuTableBody = document.querySelector('#menu-table tbody');
+                menuTableBody.innerHTML = '';
+                if (!data || data.length === 0) {
+                    menuTableBody.innerHTML = '<tr><td colspan="8">No menu items found.</td></tr>';
+                    return;
+                }
+                data.forEach(menu => {
+                    const row = menuTableBody.insertRow();
+                    
+                    row.insertCell().textContent = menu.restaurant_id;
+                    row.insertCell().textContent = menu.item_name;
+                    row.insertCell().textContent = menu.description;
+                    row.insertCell().textContent = `₹${menu.price}`;
+                    row.insertCell().textContent = menu.category;
+                    row.insertCell().textContent = menu.is_available ? 'Yes' : 'No';
+                    row.insertCell().textContent = menu.preparation_time;
+
+                    const actionsCell = row.insertCell();
+                    const updateIcon = document.createElement('span');
+                    updateIcon.textContent = '✏️';
+                    updateIcon.onclick = () => openUpdateMenuPopup(menu);
+                    actionsCell.appendChild(updateIcon);
+
+                    const deleteIcon = document.createElement('span');
+                    deleteIcon.textContent = '🗑️';
+                    deleteIcon.onclick = () => deleteMenu(menu.menu_id);
+                    actionsCell.appendChild(deleteIcon);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching menu details:', error);
+                alert('Failed to load menu details.');
+                 const menuTableBody = document.querySelector('#menu-table tbody');
+                menuTableBody.innerHTML = '<tr><td colspan="8">Error loading data.</td></tr>';
+            });
+    }
+
     function addMenuItem() {
+      const restaurantId = document.getElementById('restaurant-id').value;
       const formData = {
-        restaurant_id: document.getElementById('restaurant-id').value,
         item_name: document.getElementById('item-name').value,
         description: document.getElementById('menu-description').value,
         price: document.getElementById('price').value,
@@ -428,8 +602,13 @@
         is_available: document.getElementById('is-available').checked,
         preparation_time: document.getElementById('preparation-time').value
       };
+      
+      if (!restaurantId || !formData.item_name || !formData.price || !formData.category) {
+           alert('Restaurant ID, Item Name, Price, and Category are required.');
+          return;
+      }
 
-      fetch('/admin/restaurant/' + formData.restaurant_id + '/menu/add', {
+      fetch('/admin/restaurant/' + restaurantId + '/menu/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -440,9 +619,10 @@
       .then(data => {
         if (data.message) {
           alert(data.message);
-          // location.reload();
+          document.getElementById('add-menu-form').reset();
+          loadMenus();
         } else {
-          alert('Error: ' + data.error);
+          alert('Error: ' + (data.error || 'Failed to add item'));
         }
       })
       .catch(error => {
@@ -450,55 +630,6 @@
         alert('Failed to add menu item.');
       });
     }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      fetch('/getMenuDetails')
-        .then(response => response.json())
-        .then(data => {
-          const menuTable = document.getElementById('menu-table');
-
-          data.forEach(menu => {
-            const row = document.createElement('tr');
-
-            const itemNameCell = document.createElement('td');
-            const descriptionCell = document.createElement('td');
-            const priceCell = document.createElement('td');
-            const categoryCell = document.createElement('td');
-            const actionsCell = document.createElement('td');
-
-            itemNameCell.textContent = menu.item_name;
-            descriptionCell.textContent = menu.description;
-            priceCell.textContent = `₹${menu.price}`;
-            categoryCell.textContent = menu.category;
-
-            // Add update and delete icons
-            const updateIcon = document.createElement('span');
-            updateIcon.textContent = '✏️';
-            updateIcon.style.cursor = 'pointer';
-            updateIcon.onclick = () => openUpdateMenuPopup(menu);
-
-            const deleteIcon = document.createElement('span');
-            deleteIcon.textContent = '🗑️';
-            deleteIcon.style.cursor = 'pointer';
-            deleteIcon.onclick = () => deleteMenu(menu.menu_id);
-
-            actionsCell.appendChild(updateIcon);
-            actionsCell.appendChild(deleteIcon);
-
-            row.appendChild(itemNameCell);
-            row.appendChild(descriptionCell);
-            row.appendChild(priceCell);
-            row.appendChild(categoryCell);
-            row.appendChild(actionsCell);
-
-            menuTable.appendChild(row);
-          });
-        })
-        .catch(error => {
-          console.error('Error fetching menu details:', error);
-          alert('Failed to load menu details.');
-        });
-    });
 
     function openUpdateMenuPopup(menu) {
       const popup = document.getElementById('update-menu-popup');
@@ -538,9 +669,10 @@
       .then(data => {
         if (data.message) {
           alert(data.message);
-          location.reload();
+          closeUpdateMenuPopup();
+          loadMenus();
         } else {
-          alert('Error: ' + data.error);
+          alert('Error: ' + (data.error || 'Unknown error'));
         }
       })
       .catch(error => {
@@ -562,9 +694,9 @@
         .then(data => {
           if (data.message) {
             alert(data.message);
-            location.reload();
+            loadMenus();
           } else {
-            alert('Error: ' + data.error);
+            alert('Error: ' + (data.error || 'Unknown error'));
           }
         })
         .catch(error => {
@@ -573,7 +705,15 @@
         });
       }
     }
-  </script>
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        loadRestaurants();
+        loadMenus();
+    });
 
+  </script>
+  <footer>
+    <p>&copy; 2025 FoodhubXpress. All rights reserved.</p>
+  </footer>
 </body>
 </html>

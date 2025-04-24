@@ -1,191 +1,203 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Menu - FoodhubXpress</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Menu - FoodhubXpress</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #615c5c, #2d2a5e);
-      color: #fff;
-    }
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(to right, #615c5c, #2d2a5e);
+        color: #fff;
+      }
 
-    .menu-section {
-      padding: 3rem 2rem;
-      min-height: 100vh;
-    }
+      .menu-section {
+        padding: 3rem 2rem;
+        min-height: 100vh;
+      }
 
-    .menu-section h2 {
-      text-align: center;
-      color: #ffb6c1;
-      font-size: 2.5rem;
-      margin-bottom: 2rem;
-    }
+      .menu-section h2 {
+        text-align: center;
+        color: #ffb6c1;
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+      }
 
-    .restaurant-list {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+      .restaurant-list {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
 
-    .restaurant {
-      margin-bottom: 3rem;
-      background-color: rgba(0, 0, 0, 0.6);
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(135, 206, 235, 0.2);
-    }
+      .restaurant {
+        margin-bottom: 3rem;
+        background-color: rgba(0, 0, 0, 0.6);
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(135, 206, 235, 0.2);
+      }
 
-    .restaurant h3 {
-      font-size: 2rem;
-      color: #87ceeb;
-      margin-bottom: 1rem;
-    }
+      .restaurant h3 {
+        font-size: 2rem;
+        color: #87ceeb;
+        margin-bottom: 1rem;
+      }
 
-    .category-columns {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-    }
+      .category-columns {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+      }
 
-    .category {
-      background-color: #222;
-      padding: 1rem;
-      border-radius: 10px;
-    }
+      .category {
+        background-color: #222;
+        padding: 1rem;
+        border-radius: 10px;
+      }
 
-    .category h4 {
-      color: #ffb6c1;
-      font-size: 1.3rem;
-      margin-bottom: 0.8rem;
-      border-bottom: 1px solid #555;
-      padding-bottom: 0.4rem;
-    }
+      .category h4 {
+        color: #ffb6c1;
+        font-size: 1.3rem;
+        margin-bottom: 0.8rem;
+        border-bottom: 1px solid #555;
+        padding-bottom: 0.4rem;
+      }
 
-    .category ul {
-      list-style: none;
-      padding-left: 0;
-    }
+      .category ul {
+        list-style: none;
+        padding-left: 0;
+      }
 
-    .category ul li {
-      margin-bottom: 0.5rem;
-      font-size: 1rem;
-      color: #ccc;
-    }
+      .category ul li {
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+        color: #ccc;
+      }
 
-    .btn-add {
-      background-color: #ff6f61;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-left: 10px;
-    }
+      .btn-add {
+        background-color: #ff6f61;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left: 10px;
+      }
 
-    .btn-add:hover {
-      background-color: #ff4b3f;
-    }
-  </style>
-</head>
-<body>
+      .btn-add:hover {
+        background-color: #ff4b3f;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="logo">
+        <img
+          src="{{ url_for('static', filename='fx.jpg') }}"
+          width="350"
+          height="123"
+        />
+      </div>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('menu') }}" class="active">Menu</a></li>
+          <li><a href="{{ url_for('placeOrder') }}">Order</a></li>
+          <li><a href="{{ url_for('trackOrder') }}">Track Order</a></li>
+          <li><a href="{{ url_for('review') }}">Review</a></li>
+          {% if current_user.is_authenticated %} {% if current_user.is_admin %}
+          <li><a href="{{ url_for('admin') }}">Admin Dashboard</a></li>
+          {% endif %}
+          <li><a href="{{ url_for('logout') }}">Logout</a></li>
+          {% else %}
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+          <li><a href="{{ url_for('register') }}">Register</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </header>
 
-  <header class="navbar">
-    <div class="logo">
-      <img src="{{ url_for('static', filename='fx.jpg') }}" width="350" height="123">
+    <section class="menu-section">
+      <h2>Available Restaurants & Menus</h2>
+      <div class="restaurant-list"></div>
+    </section>
 
+    <footer>
+      <p style="text-align: center">
+        &copy; 2025 FoodhubXpress. All rights reserved.
+      </p>
+    </footer>
 
-    </div>
-    <nav>
-      <ul class="nav-links">
-        <li><a href="{{ url_for('index') }}">Home</a></li>
-        <li><a href="{{ url_for('menu') }}" class="active">Menu</a></li>
-        <li><a href="{{ url_for('placeOrder') }}">Order</a></li>
-        <li><a href="{{ url_for('trackOrder') }}">Track Order</a></li>
-        <li><a href="{{ url_for('review') }}">Review</a></li>
-        <li><a href="{{ url_for('login') }}">Login</a></li>
-      </ul>
-    </nav>
-  </header>
+    <script>
+      function addToOrder(itemName, price) {
+        const item = { itemName, price, quantity: 1 }; // Set default quantity to 1
 
-  <section class="menu-section">
-    <h2>Available Restaurants & Menus</h2>
-    <div class="restaurant-list">
-    </div>
-  </section>
+        let order = localStorage.getItem("orderItems");
+        order = order ? JSON.parse(order) : [];
 
-  <footer>
-    <p style="text-align:center;">&copy; 2025 FoodhubXpress. All rights reserved.</p>
-  </footer>
+        order.push(item);
+        localStorage.setItem("orderItems", JSON.stringify(order));
 
-  <script>
-    function addToOrder(itemName, price) {
-      const item = { itemName, price, quantity: 1 };  // Set default quantity to 1
+        alert(`${itemName} added to your order.`);
 
-      let order = localStorage.getItem('orderItems');
-      order = order ? JSON.parse(order) : [];
+        // Redirect to place-order page after adding the item
+        window.location.href = "place-order";
+      }
+    </script>
 
-      order.push(item);
-      localStorage.setItem('orderItems', JSON.stringify(order));
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        fetch("/getRestaurantsWithMenus")
+          .then((response) => response.json())
+          .then((data) => {
+            const restaurantList = document.querySelector(".restaurant-list");
+            restaurantList.innerHTML = ""; // Clear existing content
 
-      alert(`${itemName} added to your order.`);
+            data.forEach((restaurant) => {
+              const restaurantDiv = document.createElement("div");
+              restaurantDiv.classList.add("restaurant");
 
-      // Redirect to place-order page after adding the item
-      window.location.href = "place-order.html";
-    }
-  </script>
+              const restaurantName = document.createElement("h3");
+              restaurantName.textContent = restaurant.name;
+              restaurantDiv.appendChild(restaurantName);
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      fetch('/getRestaurantsWithMenus')
-        .then(response => response.json())
-        .then(data => {
-          const restaurantList = document.querySelector('.restaurant-list');
-          restaurantList.innerHTML = ''; // Clear existing content
+              const categoryColumns = document.createElement("div");
+              categoryColumns.classList.add("category-columns");
 
-          data.forEach(restaurant => {
-            const restaurantDiv = document.createElement('div');
-            restaurantDiv.classList.add('restaurant');
+              restaurant.menus.forEach((menu) => {
+                const categoryDiv = document.createElement("div");
+                categoryDiv.classList.add("category");
 
-            const restaurantName = document.createElement('h3');
-            restaurantName.textContent = restaurant.name;
-            restaurantDiv.appendChild(restaurantName);
+                const categoryName = document.createElement("h4");
+                categoryName.textContent = menu.category;
+                categoryDiv.appendChild(categoryName);
 
-            const categoryColumns = document.createElement('div');
-            categoryColumns.classList.add('category-columns');
+                const menuList = document.createElement("ul");
 
-            restaurant.menus.forEach(menu => {
-              const categoryDiv = document.createElement('div');
-              categoryDiv.classList.add('category');
+                menu.items.forEach((item) => {
+                  const menuItem = document.createElement("li");
+                  menuItem.innerHTML = `${item.item_name} <span>₹${item.price}</span><button class="btn-add" onclick="addToOrder('${item.item_name}', ${item.price})">Add</button>`;
+                  menuList.appendChild(menuItem);
+                });
 
-              const categoryName = document.createElement('h4');
-              categoryName.textContent = menu.category;
-              categoryDiv.appendChild(categoryName);
-
-              const menuList = document.createElement('ul');
-
-              menu.items.forEach(item => {
-                const menuItem = document.createElement('li');
-                menuItem.innerHTML = `${item.item_name} <span>₹${item.price}</span><button class="btn-add" onclick="addToOrder('${item.item_name}', ${item.price})">Add</button>`;
-                menuList.appendChild(menuItem);
+                categoryDiv.appendChild(menuList);
+                categoryColumns.appendChild(categoryDiv);
               });
 
-              categoryDiv.appendChild(menuList);
-              categoryColumns.appendChild(categoryDiv);
+              restaurantDiv.appendChild(categoryColumns);
+              restaurantList.appendChild(restaurantDiv);
             });
-
-            restaurantDiv.appendChild(categoryColumns);
-            restaurantList.appendChild(restaurantDiv);
+          })
+          .catch((error) => {
+            console.error("Error fetching restaurant menus:", error);
+            alert("Failed to load restaurant menus.");
           });
-        })
-        .catch(error => {
-          console.error('Error fetching restaurant menus:', error);
-          alert('Failed to load restaurant menus.');
-        });
-    });
-  </script>
-</body>
+      });
+    </script>
+  </body>
 </html>

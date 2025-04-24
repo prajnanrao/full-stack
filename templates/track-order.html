@@ -1,81 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Track Order - FoodhubXpress</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Track Order - FoodhubXpress</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
 
+    <style>
+      /* Add styles from other pages for consistency if needed */
+      /* REMOVED Duplicated Navbar styles */
+      /* REMOVED Duplicated Footer style */
 
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #2d2a5e, #615c5c);
-      color: white;
-      padding: 2rem;
-    }
-    .container {
-      max-width: 700px;
-      margin: auto;
-      background-color: rgba(0, 0, 0, 0.5);
-      padding: 2rem;
-      border-radius: 12px;
-    }
-    h2 {
-      text-align: center;
-      color: #ffb6c1;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      margin-top: 1rem;
-      margin-bottom: 1rem;
-      border-radius: 5px;
-      border: none;
-    }
-    .btn {
-      background-color: #ff6f61;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      margin-bottom: 1rem;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    .btn:hover {
-      background-color: #ff4b3f;
-    }
-    ul {
-      padding-left: 20px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Track Your Order</h2>
-    <input type="text" id="orderIdInput" placeholder="Enter your Order ID" />
-    <button class="btn" onclick="trackOrder()">Track Order</button>
-    <div id="orderDetails" style="margin-top: 2rem;"></div>
-  </div>
-
-  <script>
-    function trackOrder() {
-      const enteredId = document.getElementById("orderIdInput").value.trim();
-      const lastOrder = JSON.parse(localStorage.getItem("lastOrder"));
-
-      if (!enteredId || !lastOrder) {
-        document.getElementById("orderDetails").innerHTML =
-          "<p>Please enter a valid Order ID.</p>";
-        return;
+      /* Existing styles specific to track-order page */
+      body {
+        /* Keep body background if desired, or let style.css handle it */
+        font-family: Arial, sans-serif;
+        background: linear-gradient(to right, #2d2a5e, #615c5c);
+        color: white;
+        margin: 0;
+        padding: 0;
       }
+      .container {
+        max-width: 700px;
+        margin: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 2rem;
+        border-radius: 12px;
+      }
+      h2 {
+        text-align: center;
+        color: #ffb6c1;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 5px;
+        border: none;
+      }
+      .btn {
+        background-color: #ff6f61;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      .btn:hover {
+        background-color: #ff4b3f;
+      }
+      ul {
+        list-style: none; /* Changed from padding-left */
+        padding: 0;
+      }
+      li {
+        /* Add margin to list items */
+        margin-bottom: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="logo">
+        <img
+          src="{{ url_for('static', filename='fx.jpg') }}"
+          width="350"
+          height="123"
+        />
+      </div>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('menu') }}">Menu</a></li>
+          <li><a href="{{ url_for('placeOrder') }}">Order</a></li>
+          <li>
+            <a href="{{ url_for('trackOrder') }}" class="active">Track Order</a>
+          </li>
+          <li><a href="{{ url_for('review') }}">Review</a></li>
+          {% if current_user.is_authenticated %} {% if current_user.is_admin %}
+          <li><a href="{{ url_for('admin') }}">Admin Dashboard</a></li>
+          {% endif %}
+          <li><a href="{{ url_for('logout') }}">Logout</a></li>
+          {% else %}
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+          <li><a href="{{ url_for('register') }}">Register</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </header>
 
-      if (enteredId === lastOrder.orderId) {
-        const itemsList = lastOrder.items.map(item => 
-          `<li>${item.itemName} x ${item.quantity} = ₹${item.price * item.quantity}</li>`
-        ).join("");
+    <div class="container">
+      <h2>Track Your Order</h2>
+      <input type="text" id="orderIdInput" placeholder="Enter your Order ID" />
+      <button class="btn" onclick="trackOrder()">Track Order</button>
+      <div id="orderDetails" style="margin-top: 2rem"></div>
+    </div>
 
-        document.getElementById("orderDetails").innerHTML = `
+    <script>
+      function trackOrder() {
+        const enteredId = document.getElementById("orderIdInput").value.trim();
+        const lastOrder = JSON.parse(localStorage.getItem("lastOrder"));
+
+        if (!enteredId || !lastOrder) {
+          document.getElementById("orderDetails").innerHTML =
+            "<p>Please enter a valid Order ID.</p>";
+          return;
+        }
+
+        if (enteredId === lastOrder.orderId) {
+          const itemsList = lastOrder.items
+            .map(
+              (item) =>
+                `<li>${item.itemName} x ${item.quantity} = ₹${
+                  item.price * item.quantity
+                }</li>`
+            )
+            .join("");
+
+          document.getElementById("orderDetails").innerHTML = `
           <p><strong>Order ID:</strong> ${lastOrder.orderId}</p>
           <p><strong>Name:</strong> ${lastOrder.name}</p>
           <p><strong>Address:</strong> ${lastOrder.address}</p>
@@ -85,19 +132,23 @@
           <p><strong>Total Amount:</strong> ₹${lastOrder.total}</p>
           <p><strong>Status:</strong> Preparing your food 🍲</p>
         `;
-      } else {
-        document.getElementById("orderDetails").innerHTML =
-          "<p>❌ Sorry, we could not find an order with this ID. Please check and try again.</p>";
+        } else {
+          document.getElementById("orderDetails").innerHTML =
+            "<p>❌ Sorry, we could not find an order with this ID. Please check and try again.</p>";
+        }
       }
-    }
 
-    // Autofill last Order ID if redirected from place-order page
-    window.onload = () => {
-      const lastOrder = JSON.parse(localStorage.getItem("lastOrder"));
-      if (lastOrder) {
-        document.getElementById("orderIdInput").value = lastOrder.orderId;
-      }
-    };
-  </script>
-</body>
+      // Autofill last Order ID if redirected from place-order page
+      window.onload = () => {
+        const lastOrder = JSON.parse(localStorage.getItem("lastOrder"));
+        if (lastOrder) {
+          document.getElementById("orderIdInput").value = lastOrder.orderId;
+        }
+      };
+    </script>
+
+    <footer>
+      <p>&copy; 2025 FoodhubXpress. All rights reserved.</p>
+    </footer>
+  </body>
 </html>

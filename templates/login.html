@@ -1,138 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login - FoodhubXpress</title>
-  
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - FoodhubXpress</title>
 
-  <style>
-    .login-section {
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(to right, #e4f7ff, #fdc4ef);
-      padding: 2rem;
-    }
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
 
-    .login-form {
-      background-color: rgba(0, 0, 0, 0.7);
-      padding: 2rem;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 500px;
-      box-shadow: 0 0 20px rgba(255, 182, 193, 0.2);
-    }
+    <style>
+      .login-section {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(to right, #e4f7ff, #fdc4ef);
+        padding: 2rem;
+      }
 
-    .login-form h2 {
-      text-align: center;
-      color: #ffb6c1;
-      margin-bottom: 1.5rem;
-    }
+      .login-form {
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 2rem;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 0 20px rgba(255, 182, 193, 0.2);
+      }
 
-    .form-group {
-      margin-bottom: 1rem;
-    }
+      .login-form h2 {
+        text-align: center;
+        color: #ffb6c1;
+        margin-bottom: 1.5rem;
+      }
 
-    .form-group label {
-      display: block;
-      color: #fff;
-      margin-bottom: 0.5rem;
-      font-weight: 600;
-    }
+      .form-group {
+        margin-bottom: 1rem;
+      }
 
-    .form-group input {
-      width: 100%;
-      padding: 0.75rem;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      background-color: #1a1a1a;
-      color: #fff;
-      outline: none;
-    }
+      .form-group label {
+        display: block;
+        color: #fff;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+      }
 
-    .form-group input:focus {
-      border: 1px solid #87ceeb;
-      box-shadow: 0 0 8px #87ceeb;
-    }
+      .form-group input {
+        width: 100%;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        background-color: #1a1a1a;
+        color: #fff;
+        outline: none;
+      }
 
-    .submit-btn {
-      width: 100%;
-      padding: 0.75rem;
-      font-size: 1.1rem;
-      border: none;
-      border-radius: 8px;
-      background-color: #87ceeb;
-      color: black;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s ease;
-      margin-top: 1rem;
-    }
+      .form-group input:focus {
+        border: 1px solid #87ceeb;
+        box-shadow: 0 0 8px #87ceeb;
+      }
 
-    .submit-btn:hover {
-      background-color: #76bddc;
-      box-shadow: 0 0 12px #87ceeb;
-    }
+      .submit-btn {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: 8px;
+        background-color: #87ceeb;
+        color: black;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s ease;
+        margin-top: 1rem;
+      }
 
-    .register-link {
-      text-align: center;
-      margin-top: 1rem;
-      color: #ffb6c1;
-    }
+      .submit-btn:hover {
+        background-color: #76bddc;
+        box-shadow: 0 0 12px #87ceeb;
+      }
 
-    .register-link a {
-      color: #87ceeb;
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
+      .register-link {
+        text-align: center;
+        margin-top: 1rem;
+        color: #ffb6c1;
+      }
 
-  <header class="navbar">
-    <div class="logo">
-     
-      <img src="{{ url_for('static', filename='fx.jpg') }}" width="350" height="123">
+      .register-link a {
+        color: #87ceeb;
+        text-decoration: underline;
+      }
 
-    </div>
-    <nav>
-      <ul class="nav-links">
-        <li><a href="{{ url_for('index') }}">Home</a></li>
-        <li><a href="{{ url_for('menu') }}">Menu</a></li>
-        <li><a href="{{ url_for('placeOrder') }}">Order</a></li>
-        <li><a href="{{ url_for('trackOrder') }}">Track Order</a></li>
-        <li><a href="{{ url_for('review') }}">Review</a></li>
-        <li><a href="{{ url_for('login') }}" class="active">Login</a></li>
-      </ul>
-    </nav>
-  </header>
-
-  <section class="login-section">
-    <form class="login-form">
-      <h2>Login to Your Account</h2>
-
-      <div class="form-group">
-        <label for="email">Email Address</label>
-        <input type="email" id="email" placeholder="you@example.com" required />
+      .flash-messages {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .flash-messages .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .flash-messages .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .flash-messages .alert-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      .flash-messages .alert-warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="logo">
+        <img
+          src="{{ url_for('static', filename='fx.jpg') }}"
+          width="350"
+          height="123"
+        />
       </div>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('menu') }}">Menu</a></li>
+          <li><a href="{{ url_for('placeOrder') }}">Order</a></li>
+          <li><a href="{{ url_for('trackOrder') }}">Track Order</a></li>
+          <li><a href="{{ url_for('review') }}">Review</a></li>
+          {# No need to show Login/Register link on the login page itself #} {#
+          Check if user somehow got here while logged in #} {% if
+          current_user.is_authenticated %}
+          <li><a href="{{ url_for('logout') }}">Logout (Logged In?)</a></li>
+          {% else %}
+          <li><a href="{{ url_for('register') }}">Register</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </header>
 
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="********" required />
-      </div>
+    <section class="login-section">
+      <form class="login-form" method="POST" action="{{ url_for('login') }}">
+        <h2>Login to Your Account</h2>
 
-      <button type="submit" class="submit-btn">Login</button>
+        <!-- Flash Messages -->
+        <div class="flash-messages">
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %} {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %} {% endif %} {% endwith %}
+        </div>
 
-      <p class="register-link">Don't have an account? <a href="{{ url_for('register') }}" >Register here</a></p>
-    </form>
-  </section>
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="you@example.com"
+            required
+          />
+        </div>
 
-  <footer>
-    <p>&copy; 2025 FoodhubXpress. All rights reserved.</p>
-  </footer>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="********"
+            required
+          />
+        </div>
 
-</body>
+        <div
+          class="form-group"
+          style="display: flex; align-items: center; color: white"
+        >
+          <input
+            type="checkbox"
+            id="remember"
+            name="remember"
+            style="width: auto; margin-right: 10px"
+          />
+          <label for="remember" style="margin-bottom: 0">Remember Me</label>
+        </div>
+
+        <button type="submit" class="submit-btn">Login</button>
+
+        <p class="register-link">
+          Don't have an account?
+          <a href="{{ url_for('register') }}">Register here</a>
+        </p>
+      </form>
+    </section>
+
+    <footer>
+      <p>&copy; 2025 FoodhubXpress. All rights reserved.</p>
+    </footer>
+  </body>
 </html>

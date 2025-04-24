@@ -1,17 +1,18 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL
 from flask_login import LoginManager, login_user, login_required, UserMixin, logout_user, current_user
 from flask import jsonify
 import logging
+from werkzeug.security import generate_password_hash, check_password_hash # For password hashing
+import functools # For admin_required decorator
 
 app = Flask(__name__)
-
 logging.basicConfig(level=logging.INFO)
 
 # Database configuration
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''  # Replace with your password
+app.config['MYSQL_PASSWORD'] = 'Prajna@9623'  # Replace with your password
 app.config['MYSQL_DB'] = 'Foodhub'
 mysql = MySQL(app)
 
@@ -21,6 +22,43 @@ app.secret_key = 'your_secret_key'
 # Flask-Login setup
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = 'login' # Redirect to /login if @login_required fails
+login_manager.login_message_category = 'info' # Flash message category
+
+# --- Enhanced User Class --- 
+class User(UserMixin):
+    def __init__(self, id, email, name, is_admin):
+        self.id = id
+        self.email = email # Using email as username essentially
+        self.name = name
+        self.is_admin = is_admin
+
+    # Add other properties you might need from the Customers table
+    
+# --- Updated User Loader --- 
+@login_manager.user_loader
+def load_user(user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT customer_id, email, Full_name, is_admin FROM Customers WHERE customer_id = %s", (int(user_id),))
+    user_data = cur.fetchone()
+    cur.close()
+    if user_data:
+        # User data is tuple: (id, email, name, is_admin_flag)
+        is_admin_bool = bool(user_data[3]) # Convert DB value (0/1) to boolean
+        return User(id=user_data[0], email=user_data[1], name=user_data[2], is_admin=is_admin_bool)
+    return None
+
+# --- Admin Required Decorator --- 
+def admin_required(func):
+    @functools.wraps(func)
+    def decorated_view(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return login_manager.unauthorized()
+        if not current_user.is_admin:
+            flash('Admin access required.', 'warning')
+            return redirect(url_for('index')) # Or wherever non-admins should go
+        return func(*args, **kwargs)
+    return decorated_view
 
 @app.route('/getRestaurant', methods=['GET'])
 def get_restaurant():
@@ -54,6 +92,8 @@ def get_restaurant():
         return jsonify({'error': str(e)})
 
 @app.route('/addRestaurant', methods=['POST'])
+@login_required
+@admin_required
 def add_restaurant():
     try:
         data = request.json  # Get JSON data from the request
@@ -131,34 +171,48 @@ def delete_restaurant():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Dummy User class
-class User(UserMixin):
-    def __init__(self, id):
-        self.id = id
-
-# User loader function for Flask-Login
-@login_manager.user_loader
-def load_user(user_id):
-    return User(user_id)
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index')) # Already logged in
+
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
-        # Example: Check for admin credentials
-        if username == 'admin' and password == 'adminpassword':
-            user = User(1)  # Create a user object
-            login_user(user)
-            return redirect(url_for('index'))
+        remember = True if request.form.get('remember') else False
+
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT customer_id, email, Full_name, password_hash, is_admin FROM Customers WHERE email = %s", (email,))
+        user_data = cur.fetchone()
+        cur.close()
+
+        if user_data:
+            stored_hash = user_data[3]
+            if check_password_hash(stored_hash, password):
+                is_admin_bool = bool(user_data[4])
+                user_obj = User(id=user_data[0], email=user_data[1], name=user_data[2], is_admin=is_admin_bool)
+                login_user(user_obj, remember=remember)
+                
+                # Redirect admin to admin page, others to index
+                next_page = request.args.get('next') # For redirecting after required login
+                if next_page:
+                    return redirect(next_page)
+                if user_obj.is_admin:
+                    return redirect(url_for('admin')) 
+                else:
+                    return redirect(url_for('index'))
+            else:
+                flash('Login failed. Check email and password.', 'danger')
         else:
-            return "Invalid credentials", 403
-    return render_template('login.html')
+            flash('Login failed. User does not exist.', 'danger')
+
+    return render_template('login.html') # Render login form for GET requests
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
+    flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
 @app.route('/')
@@ -181,16 +235,77 @@ def trackOrder():
 def review():
     return render_template('review.html')
 
-@app.route('/register')
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    return render_template('register.html')
+    if current_user.is_authenticated:
+        return redirect(url_for('index')) # Already logged in
+
+    if request.method == 'POST':
+        email = request.form['email']
+        name = request.form['name'] # Assuming 'name' corresponds to Full_name
+        password = request.form['password']
+        # Add other fields as needed (phone, address etc. from your form)
+        phone = request.form.get('phone') # Get phone number, use .get for safety
+        address = request.form.get('address')
+        city = request.form.get('city')
+        state = request.form.get('state')
+        pin_code = request.form.get('pin_code')
+        
+        # Basic validation (add more robust validation)
+        if not email or not name or not password or not phone or not address or not city or not state or not pin_code: # Added address fields validation
+            flash('All fields are required!', 'danger')
+            return redirect(url_for('register'))
+
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT customer_id FROM Customers WHERE email = %s", (email,))
+        existing_user = cur.fetchone()
+
+        if existing_user:
+            flash('Email address already registered.', 'warning')
+            cur.close()
+            return redirect(url_for('register'))
+
+        # Hash the password
+        hashed_password = generate_password_hash(password)
+
+        # Insert new user (as non-admin by default)
+        # Adjust INSERT statement based on the fields you collect
+        try:
+            # --- START: Manually generate next customer_id ---
+            cur.execute("SELECT MAX(customer_id) FROM Customers")
+            max_id_result = cur.fetchone()
+            # Handle empty table or NULL result
+            max_id = max_id_result[0] if max_id_result and max_id_result[0] is not None else 0 
+            next_customer_id = max_id + 1
+            logging.info(f"Manually generating next customer_id: {next_customer_id}")
+            # --- END: Manually generate next customer_id ---
+
+            # Updated INSERT to include the generated customer_id and all required fields
+            cur.execute("INSERT INTO Customers (customer_id, Full_name, email, password_hash, phone, address, city, state, Pin_code) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                        (next_customer_id, name, email, hashed_password, phone, address, city, state, pin_code))
+            mysql.connection.commit()
+            flash('Registration successful! Please log in.', 'success')
+            cur.close()
+            return redirect(url_for('login'))
+        except Exception as e:
+            mysql.connection.rollback() # Rollback in case of error
+            flash(f'An error occurred: {e}', 'danger')
+            logging.error(f"Registration error: {e}")
+            cur.close()
+            return redirect(url_for('register'))
+        
+    return render_template('register.html') # Render registration form for GET requests
 
 @app.route('/admin')
+@login_required 
+@admin_required # Add this decorator
 def admin():
+    # Remove the old hardcoded login check if it was here
     return render_template('admin.html')
 
 @app.route('/manage-restaurants', methods=['GET', 'POST'])
-@login_required  # Ensure only logged-in users can access this route
+@login_required  
+@admin_required # Add this decorator
 def manage_restaurants():
     if request.method == 'POST':
         name = request.form['name']
@@ -208,7 +323,8 @@ def manage_restaurants():
     return render_template('manage_restaurants.html', restaurants=restaurants)
 
 @app.route('/manage-orders', methods=['GET'])
-@login_required  # Ensure only logged-in users can access this route
+@login_required  
+@admin_required # Add this decorator
 def manage_orders():
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM orders")
@@ -241,7 +357,7 @@ def update_order_status():
     return redirect(url_for('manage_orders'))
 
 @app.route('/submit-review', methods=['POST'])
-@login_required  # Ensure only logged-in users can access this route
+@login_required  # Ensure only logged-in users can submit reviews
 def submit_review():
     restaurant = request.form['restaurant']
     rating = request.form['rating']

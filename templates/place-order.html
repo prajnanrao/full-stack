@@ -1,116 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Place Order - FoodhubXpress</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Place Order - FoodhubXpress</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #2d2a5e, #615c5c);
-      color: white;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      padding: 2rem;
-      background-color: rgba(0, 0, 0, 0.5);
-      margin-top: 2rem;
-      border-radius: 12px;
-    }
-    h2 {
-      text-align: center;
-      color: #ffb6c1;
-    }
-    table {
-      width: 100%;
-      margin-top: 1rem;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 0.5rem;
-      text-align: left;
-      border-bottom: 1px solid #999;
-    }
-    input[type="number"] {
-      width: 50px;
-    }
-    .btn {
-      background-color: #ff6f61;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      margin-top: 1rem;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    .btn:hover {
-      background-color: #ff4b3f;
-    }
-    label {
-      display: block;
-      margin-top: 1rem;
-      font-weight: bold;
-    }
-    input[type="text"], input[type="tel"] {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border-radius: 5px;
-      border: none;
-    }
-  </style>
-</head>
-<body>
-
-  <header class="navbar">
-    <div class="logo">
-      <img src="{{ url_for('static', filename='fx.jpg') }}" width="350" height="123">
-
-    </div>
-    <nav>
-      <ul class="nav-links">
-        <li><a href="{{ url_for('index') }}">Home</a></li>
-        <li><a href="{{ url_for('menu') }}">Menu</a></li>
-        <li><a href="{{ url_for('placeOrder') }}" class="active">Order</a></li>
-        <li><a href="{{ url_for('trackOrder') }}">Track Order</a></li>
-        <li><a href="{{ url_for('review') }}">Review</a></li>
-        <li><a href="{{ url_for('login') }}">Login</a></li>
-      </ul>
-    </nav>
-  </header>
-
-  <div class="container">
-    <h2>Your Order</h2>
-    <div id="orderTable"></div>
-
-    <h3>Customer Details</h3>
-    <label for="name">Name:</label>
-    <input type="text" id="name" required />
-    <label for="address">Address:</label>
-    <input type="text" id="address" required />
-    <label for="phone">Phone:</label>
-    <input type="tel" id="phone" required />
-
-    <button class="btn" onclick="placeOrder()">Place Order</button>
-
-    <div id="orderSummary" style="margin-top: 2rem;"></div>
-  </div>
-
-  <script>
-    let orderItems = JSON.parse(localStorage.getItem("orderItems")) || [];
-
-    function displayOrderTable() {
-      if (orderItems.length === 0) {
-        document.getElementById("orderTable").innerHTML = "<p>No items added.</p>";
-        return;
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(to right, #2d2a5e, #615c5c);
+        color: white;
+        margin: 0;
+        padding: 0;
       }
+      .container {
+        max-width: 800px;
+        margin: auto;
+        padding: 2rem;
+        background-color: rgba(0, 0, 0, 0.5);
+        margin-top: 2rem;
+        border-radius: 12px;
+      }
+      h2 {
+        text-align: center;
+        color: #ffb6c1;
+      }
+      table {
+        width: 100%;
+        margin-top: 1rem;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 0.5rem;
+        text-align: left;
+        border-bottom: 1px solid #999;
+      }
+      input[type="number"] {
+        width: 50px;
+      }
+      .btn {
+        background-color: #ff6f61;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin-top: 1rem;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      .btn:hover {
+        background-color: #ff4b3f;
+      }
+      label {
+        display: block;
+        margin-top: 1rem;
+        font-weight: bold;
+      }
+      input[type="text"],
+      input[type="tel"] {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border-radius: 5px;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="logo">
+        <img
+          src="{{ url_for('static', filename='fx.jpg') }}"
+          width="350"
+          height="123"
+        />
+      </div>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('menu') }}">Menu</a></li>
+          <li>
+            <a href="{{ url_for('placeOrder') }}" class="active">Order</a>
+          </li>
+          <li><a href="{{ url_for('trackOrder') }}">Track Order</a></li>
+          <li><a href="{{ url_for('review') }}">Review</a></li>
+          {% if current_user.is_authenticated %} {% if current_user.is_admin %}
+          <li><a href="{{ url_for('admin') }}">Admin Dashboard</a></li>
+          {% endif %}
+          <li><a href="{{ url_for('logout') }}">Logout</a></li>
+          {% else %}
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+          <li><a href="{{ url_for('register') }}">Register</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </header>
 
-      let tableHTML = `
+    <div class="container">
+      <h2>Your Order</h2>
+      <div id="orderTable"></div>
+
+      <h3>Customer Details</h3>
+      <label for="name">Name:</label>
+      <input type="text" id="name" required />
+      <label for="address">Address:</label>
+      <input type="text" id="address" required />
+      <label for="phone">Phone:</label>
+      <input type="tel" id="phone" required />
+
+      <button class="btn" onclick="placeOrder()">Place Order</button>
+
+      <div id="orderSummary" style="margin-top: 2rem"></div>
+    </div>
+
+    <script>
+      let orderItems = JSON.parse(localStorage.getItem("orderItems")) || [];
+
+      function displayOrderTable() {
+        if (orderItems.length === 0) {
+          document.getElementById("orderTable").innerHTML =
+            "<p>No items added.</p>";
+          return;
+        }
+
+        let tableHTML = `
         <table>
           <tr>
             <th>Item</th>
@@ -120,9 +137,9 @@
           </tr>
       `;
 
-      orderItems.forEach((item, index) => {
-        if (!item.quantity) item.quantity = 1;
-        tableHTML += `
+        orderItems.forEach((item, index) => {
+          if (!item.quantity) item.quantity = 1;
+          tableHTML += `
           <tr>
             <td>${item.itemName}</td>
             <td>${item.price}</td>
@@ -130,56 +147,56 @@
             <td><button onclick="removeItem(${index})">❌</button></td>
           </tr>
         `;
-      });
+        });
 
-      tableHTML += `</table>`;
-      document.getElementById("orderTable").innerHTML = tableHTML;
-    }
-
-    function updateQuantity(index, qty) {
-      orderItems[index].quantity = parseInt(qty);
-      localStorage.setItem("orderItems", JSON.stringify(orderItems));
-      displayOrderTable();
-    }
-
-    function removeItem(index) {
-      orderItems.splice(index, 1);
-      localStorage.setItem("orderItems", JSON.stringify(orderItems));
-      displayOrderTable();
-    }
-
-    function generateOrderId() {
-      return "ORD" + Math.floor(Math.random() * 1000000);
-    }
-
-    function placeOrder() {
-      const name = document.getElementById("name").value.trim();
-      const address = document.getElementById("address").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-
-      if (!name || !address || !phone) {
-        alert("Please fill in all customer details.");
-        return;
+        tableHTML += `</table>`;
+        document.getElementById("orderTable").innerHTML = tableHTML;
       }
 
-      let totalAmount = 0;
-      orderItems.forEach(item => {
-        totalAmount += item.price * item.quantity;
-      });
+      function updateQuantity(index, qty) {
+        orderItems[index].quantity = parseInt(qty);
+        localStorage.setItem("orderItems", JSON.stringify(orderItems));
+        displayOrderTable();
+      }
 
-      const orderId = generateOrderId();
-      const order = {
-        orderId,
-        name,
-        address,
-        phone,
-        items: orderItems,
-        total: totalAmount
-      };
+      function removeItem(index) {
+        orderItems.splice(index, 1);
+        localStorage.setItem("orderItems", JSON.stringify(orderItems));
+        displayOrderTable();
+      }
 
-      localStorage.setItem("lastOrder", JSON.stringify(order));
+      function generateOrderId() {
+        return "ORD" + Math.floor(Math.random() * 1000000);
+      }
 
-      document.getElementById("orderSummary").innerHTML = `
+      function placeOrder() {
+        const name = document.getElementById("name").value.trim();
+        const address = document.getElementById("address").value.trim();
+        const phone = document.getElementById("phone").value.trim();
+
+        if (!name || !address || !phone) {
+          alert("Please fill in all customer details.");
+          return;
+        }
+
+        let totalAmount = 0;
+        orderItems.forEach((item) => {
+          totalAmount += item.price * item.quantity;
+        });
+
+        const orderId = generateOrderId();
+        const order = {
+          orderId,
+          name,
+          address,
+          phone,
+          items: orderItems,
+          total: totalAmount,
+        };
+
+        localStorage.setItem("lastOrder", JSON.stringify(order));
+
+        document.getElementById("orderSummary").innerHTML = `
         <h3>Order Placed Successfully!</h3>
         <p><strong>Order ID:</strong> ${orderId}</p>
         <p><strong>Name:</strong> ${name}</p>
@@ -187,22 +204,31 @@
         <p><strong>Phone:</strong> ${phone}</p>
         <h4>Bill:</h4>
         <ul>
-          ${orderItems.map(item => `
-            <li>${item.itemName} x ${item.quantity} = ₹${item.price * item.quantity}</li>
-          `).join("")}
+          ${orderItems
+            .map(
+              (item) => `
+            <li>${item.itemName} x ${item.quantity} = ₹${
+                item.price * item.quantity
+              }</li>
+          `
+            )
+            .join("")}
         </ul>
         <p><strong>Total Amount:</strong> ₹${totalAmount}</p>
         <button class="btn" onclick="goToTrackOrder()">Track Your Order</button>
       `;
 
-      localStorage.removeItem("orderItems"); // Clear cart after placing order
-    }
+        localStorage.removeItem("orderItems"); // Clear cart after placing order
+      }
 
-    function goToTrackOrder() {
-      window.location.href = "track-order.html";
-    }
+      function goToTrackOrder() {
+        window.location.href = "track-order";
+      }
 
-    displayOrderTable();
-  </script>
-</body>
+      displayOrderTable();
+    </script>
+    <footer>
+      <p>&copy; 2025 FoodhubXpress. All rights reserved.</p>
+    </footer>
+  </body>
 </html>
