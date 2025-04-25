@@ -137,6 +137,8 @@
       max-width: 600px;
       border-radius: 10px;
       box-shadow: 0 0 25px rgba(135, 206, 235, 0.3);
+      max-height: 80vh;
+      overflow-y: auto;
     }
     .popup form {
       background-color: transparent;
@@ -148,6 +150,17 @@
     }
     #update-popup {}
     #update-menu-popup {}
+
+    /* Styles for soft-deleted items */
+    .inactive-row td,
+    .unavailable-row td {
+        color: #888; /* Grey out text */
+        text-decoration: line-through; /* Add strikethrough */
+    }
+    .inactive-row td span,
+    .unavailable-row td span {
+        text-decoration: none; /* Remove strikethrough from icons */
+    }
   </style>
 </head>
 <body>
@@ -156,12 +169,20 @@
     <div class="logo">
       <img src="{{ url_for('static', filename='fx.jpg') }}" width="350" height="123">
     </div>
-    <nav>
-      <ul class="nav-links">
+    <nav id="main-nav">
+       <button class="hamburger" id="hamburger-button" aria-label="Toggle menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+      </button>
+      <ul class="nav-links" id="nav-link-list">
         <li><a href="{{ url_for('index') }}">View Site</a></li>
         {% if current_user.is_authenticated %}
           <li>
-            <span style="color: #ccc; font-size: 1.5rem; font-weight: normal; margin-right: 15px;">Welcome, {{ current_user.name }}</span>
+            {# Profile Link for Admin #}
+            <a href="{{ url_for('profile') }}" title="Edit Profile" style="color: #ccc; font-size: 1.5rem; font-weight: normal; margin-right: 15px; text-decoration: none;">
+                Welcome, {{ current_user.name }}
+            </a>
           </li>
           <li><a href="{{ url_for('logout') }}">Logout</a></li>
         {% else %}
@@ -179,6 +200,7 @@
     <a href="#manage-menus-section">Manage Menus</a>
     <a href="#manage-orders">Manage Orders</a>
     <a href="#track-order">Track Order</a>
+    <a href="#manage-reviews">Manage Reviews</a>
   </nav>
 
   <div class="content">
@@ -211,6 +233,7 @@
       <table id="restaurants-table">
         <thead>
           <tr>
+            <th>Restaurant ID</th>
             <th>Name</th>
             <th>Address</th>
             <th>Phone</th>
@@ -221,6 +244,7 @@
             <th>Pin</th>
             <th>Description</th>
             <th>Actions</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -262,6 +286,7 @@
                 <th>Available</th>
                 <th>Prep Time</th>
                 <th>Actions</th>
+                <th>Status</th>
             </tr>
           </thead>
            <tbody>
@@ -275,8 +300,8 @@
         <thead>
           <tr>
             <th>Order ID</th>
-            <th>Customer ID</th>
-            <th>Restaurant ID</th>
+            <th>Customer</th>
+            <th>Restaurant</th>
             <th>Status</th>
             <th>Placed Time</th>
             <th>Total Price</th>
@@ -285,54 +310,136 @@
           </tr>
         </thead>
         <tbody>
-        {% for order in orders %}
-          <tr>
-            <td>{{ order[0] }}</td>
-            <td>{{ order[1] }}</td>
-            <td>{{ order[2] }}</td>
-            <td>{{ order[4] }}</td>
-            <td>{{ order[5] }}</td>
-            <td>₹{{ order[9] }}</td>
-            <td>{{ order[10] }}</td>
-            <td>
-              <form action="/update-order-status" method="POST" style="background: none; padding: 0; margin:0; box-shadow: none;">
-                <input type="hidden" name="order_id" value="{{ order[0] }}">
-                <select name="status">
-                  <option value="placed" {% if order[4] == 'placed' %}selected{% endif %}>Placed</option>
-                  <option value="preparing" {% if order[4] == 'preparing' %}selected{% endif %}>Preparing</option>
-                  <option value="out_for_delivery" {% if order[4] == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>
-                  <option value="delivered" {% if order[4] == 'delivered' %}selected{% endif %}>Delivered</option>
-                  <option value="cancelled" {% if order[4] == 'cancelled' %}selected{% endif %}>Cancelled</option>
-                </select>
-                <button type="submit">Update</button>
-              </form>
-            </td>
-          </tr>
+        {# Check if orders list exists and is not empty #}
+        {% if orders and orders|length > 0 %}
+          {% for order in orders %}
+            <tr>
+              <td>{{ order.order_id }}</td>
+              <td>{{ order.customer_name or ('ID: ' + order.customer_id|string) }}</td> {# Display name or ID #}
+              <td>{{ order.restaurant_name or ('ID: ' + order.restaurant_id|string) }}</td> {# Display name or ID #}
+              <td>{{ order.order_status }}</td>
+              <td>{{ order.order_placed_time.strftime('%Y-%m-%d %H:%M') if order.order_placed_time else 'N/A' }}</td>
+              <td>₹{{ "%.2f"|format(order.total_price) }}</td>
+              <td>{{ order.delivery_address }}</td>
+              <td>
+                {# Note: The form action /update-order-status still exists #}
+                {# It might be better to replace this with JS fetch calls later #}
+                {# Add fragment identifier #manage-orders to the action URL #}
+                <form action="{{ url_for('update_order_status') }}#manage-orders" method="POST" style="background: none; padding: 0; margin:0; box-shadow: none; display: inline-flex; align-items: center; gap: 5px;">
+                  <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                  <select name="status" style="padding: 5px; margin-bottom: 0;">
+                    <option value="placed" {% if order.order_status == 'placed' %}selected{% endif %}>Placed</option>
+                    <option value="preparing" {% if order.order_status == 'preparing' %}selected{% endif %}>Preparing</option>
+                    <option value="out_for_delivery" {% if order.order_status == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>
+                    <option value="delivered" {% if order.order_status == 'delivered' %}selected{% endif %}>Delivered</option>
+                    <option value="cancelled" {% if order.order_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                  </select>
+                  <button type="submit" style="margin-top: 0; padding: 5px 10px; font-size: 0.9rem;">Update</button>
+                </form>
+                 {# Add Cancel Button calling JavaScript function #}
+                 <button 
+                    type="button"
+                    onclick="cancelOrder({{ order.order_id }}, this)" 
+                    style="margin-top: 0; padding: 5px 10px; font-size: 0.9rem; background-color: #dc3545; color: white; margin-left: 5px;"
+                    {% if order.order_status == 'delivered' or order.order_status == 'cancelled' %} disabled {% endif %}
+                    >Cancel
+                 </button>
+              </td>
+            </tr>
+          {% endfor %}
         {% else %}
             <tr><td colspan="8">No orders found.</td></tr>
-        {% endfor %}
+        {% endif %}
         </tbody>
       </table>
     </section>
 
     <section id="track-order">
       <h2>Track Specific Order</h2>
-      <form action="/admin/track-order" method="POST">
+       <!-- Flash Messages for tracking -->
+        <div class="flash-messages" style="padding-bottom: 1rem;">
+          {% with messages = get_flashed_messages(with_categories=true, category_filter=['warning','danger']) %} {# Filter for track errors #}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" style="padding: 10px; border-radius: 5px; margin-bottom: 10px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;">{{ message }}</div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+        </div>
+      {# Form now POSTs to /admin which handles it, add fragment #}
+      <form action="{{ url_for('admin') }}#track-order" method="POST">
         <label for="track_order_id">Enter Order ID:</label>
         <input type="text" id="track_order_id" name="order_id" required>
         <button type="submit">Track</button>
       </form>
-      {% if order %}
-        <h3>Order Details</h3>
-        <p>Order ID: {{ order.order_id }}</p>
-        <p>Customer ID: {{ order.customer_id }}</p>
-        <p>Restaurant ID: {{ order.restaurant_id }}</p>
-        <p>Status: {{ order.order_status }}</p>
-        <p>Total Price: ₹{{ order.total_price }}</p>
-      {% elif order is not none %}
-        <p>Could not find order with the specified ID.</p>
+      
+      {# Display tracked order details if found #}
+      {% if tracked_order %}
+        <h3>Order Details for ID: {{ tracked_order.order_id }}</h3>
+        <div style="background-color: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
+            <p><strong>Customer:</strong> {{ tracked_order.customer_name or tracked_order.customer_id }}</p>
+            <p><strong>Restaurant:</strong> {{ tracked_order.restaurant_name or tracked_order.restaurant_id }}</p>
+            <p><strong>Status:</strong> {{ tracked_order.order_status }}</p>
+            <p><strong>Total Price:</strong> ₹{{ "%.2f"|format(tracked_order.total_price) }}</p>
+            <p><strong>Address:</strong> {{ tracked_order.delivery_address }}</p>
+            <p><strong>Placed Time:</strong> {{ tracked_order.order_placed_time.strftime('%Y-%m-%d %H:%M:%S') if tracked_order.order_placed_time else 'N/A' }}</p>
+            {# Add more details like items if needed - requires modifying /admin fetch logic #}
+        </div>
+      {% elif request.method == 'POST' and not tracked_order %}
+          {# Display this only if a POST happened and order wasn't found (and no other flash error was set) #}
+          {% if not get_flashed_messages(category_filter=['warning', 'danger']) %}
+             <p style="color: yellow; margin-top: 1rem;">Order ID submitted, but not found in the database.</p>
+          {% endif %}
       {% endif %}
     </section>
+
+    {# --- Manage Reviews Section --- #}
+    <section id="manage-reviews">
+      <h2>Manage Reviews</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Customer</th>
+            <th>Restaurant</th>
+            <th>Rating</th>
+            <th>Comment</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="reviews-table-body"> {# Added ID for JS targeting #}
+        {# Check if reviews list exists and is not empty #}
+        {% if reviews and reviews|length > 0 %}
+          {% for review in reviews %}
+            <tr id="review-row-{{ review.review_id }}"> {# Added ID for easier row removal #}
+              <td>{{ review.review_id }}</td>
+              <td>{{ review.customer_name or 'N/A' }}</td>
+              <td>{{ review.restaurant_name or 'N/A' }}</td>
+              <td>{{ review.rating }}★</td>
+              <td>{{ review.comment }}</td>
+              <td>
+                {# Store data in data-* attributes #}
+                <span 
+                    class="edit-review-btn" {# Added class for potential styling/selection #}
+                    data-review-id="{{ review.review_id }}"
+                    data-customer-name="{{ review.customer_name | e }}" {# Use Jinja's escape filter 'e' #}
+                    data-restaurant-name="{{ review.restaurant_name | e }}"
+                    data-rating="{{ review.rating }}"
+                    data-comment="{{ review.comment | e }}"
+                    onclick="openUpdateReviewPopup(this)" {# Pass the element itself #}
+                    style="cursor: pointer; margin-right: 10px;" 
+                    title="Edit Comment">✏️</span>
+                <span onclick="deleteReview({{ review.review_id }})" style="cursor: pointer;" title="Delete Review">🗑️</span>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+            <tr><td colspan="6">No reviews found.</td></tr>
+        {% endif %}
+        </tbody>
+      </table>
+    </section>
+    {# --- End Manage Reviews Section --- #}
 
   </div>
 
@@ -384,6 +491,23 @@
     </form>
   </div>
 
+  {# --- Update Review Popup --- #}
+  <div id="update-review-popup" class="popup">
+    <h2>Update Review Comment</h2>
+    <form id="update-review-form">
+      <input type="hidden" id="update-review-id">
+      <p><strong>Review ID:</strong> <span id="popup-review-id"></span></p>
+      <p><strong>Customer:</strong> <span id="popup-review-customer"></span></p>
+      <p><strong>Restaurant:</strong> <span id="popup-review-restaurant"></span></p>
+      <p><strong>Rating:</strong> <span id="popup-review-rating"></span>★</p>
+      <label for="update-review-comment">Comment:</label>
+      <textarea id="update-review-comment" required></textarea>
+      <button type="button" onclick="updateReview()">Save Changes</button>
+      <button type="button" onclick="closeUpdateReviewPopup()" class="btn-secondary">Cancel</button>
+    </form>
+  </div>
+  {# --- End Update Review Popup --- #}
+
   <script>
     function loadRestaurants() {
         fetch('/getRestaurant')
@@ -393,12 +517,18 @@
             const tableBody = document.querySelector('#restaurants-table tbody');
             tableBody.innerHTML = '';
             if (!data || data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="10">No restaurants found.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="11">No restaurants found.</td></tr>';
                 return;
             }
             data.forEach(restaurant => {
               const row = tableBody.insertRow();
               
+              // Apply style if inactive
+              if (!restaurant.is_active) {
+                  row.classList.add('inactive-row');
+              }
+              
+              row.insertCell().textContent = restaurant.restaurant_id;
               row.insertCell().textContent = restaurant.name;
               row.insertCell().textContent = restaurant.address;
               row.insertCell().textContent = restaurant.phone;
@@ -412,20 +542,36 @@
               const actionsCell = row.insertCell();
               const updateIcon = document.createElement('span');
               updateIcon.textContent = '✏️';
-              updateIcon.onclick = () => openUpdatePopup(restaurant);
+              updateIcon.style.cursor = restaurant.is_active ? 'pointer' : 'not-allowed'; // Cursor based on status
+              updateIcon.style.opacity = restaurant.is_active ? 1 : 0.5; // Opacity based on status
+              updateIcon.title = restaurant.is_active ? 'Edit Restaurant' : 'Cannot edit inactive restaurant';
+              updateIcon.onclick = () => {
+                  if (restaurant.is_active) openUpdatePopup(restaurant);
+              };
               actionsCell.appendChild(updateIcon);
 
               const deleteIcon = document.createElement('span');
               deleteIcon.textContent = '🗑️';
-              deleteIcon.onclick = () => deleteRestaurant(restaurant.restaurant_id);
+              deleteIcon.style.cursor = restaurant.is_active ? 'pointer' : 'not-allowed'; // Cursor based on status
+              deleteIcon.style.opacity = restaurant.is_active ? 1 : 0.5; // Opacity based on status
+              deleteIcon.title = restaurant.is_active ? 'Mark as Inactive' : 'Already Inactive';
+              deleteIcon.onclick = () => {
+                  if (restaurant.is_active) deleteRestaurant(restaurant.restaurant_id);
+              };
               actionsCell.appendChild(deleteIcon);
+
+              // Add Status Cell
+              const statusCell = row.insertCell();
+              statusCell.textContent = restaurant.is_active ? 'Active' : 'Inactive';
+              statusCell.style.fontWeight = 'bold';
+              statusCell.style.color = restaurant.is_active ? '#90EE90' : '#FF7F7F'; // Light Green / Light Red
             });
           })
           .catch(error => {
             console.error('Error fetching restaurant data:', error);
             alert('Failed to load restaurant data.');
              const tableBody = document.querySelector('#restaurants-table tbody');
-             tableBody.innerHTML = '<tr><td colspan="10">Error loading data.</td></tr>';
+             tableBody.innerHTML = '<tr><td colspan="11">Error loading data.</td></tr>';
           });
     }
 
@@ -558,11 +704,16 @@
                 const menuTableBody = document.querySelector('#menu-table tbody');
                 menuTableBody.innerHTML = '';
                 if (!data || data.length === 0) {
-                    menuTableBody.innerHTML = '<tr><td colspan="8">No menu items found.</td></tr>';
+                    menuTableBody.innerHTML = '<tr><td colspan="9">No menu items found.</td></tr>';
                     return;
                 }
                 data.forEach(menu => {
                     const row = menuTableBody.insertRow();
+                    
+                    // Apply style if unavailable
+                    if (!menu.is_available) {
+                        row.classList.add('unavailable-row');
+                    }
                     
                     row.insertCell().textContent = menu.restaurant_id;
                     row.insertCell().textContent = menu.item_name;
@@ -575,20 +726,36 @@
                     const actionsCell = row.insertCell();
                     const updateIcon = document.createElement('span');
                     updateIcon.textContent = '✏️';
-                    updateIcon.onclick = () => openUpdateMenuPopup(menu);
+                    updateIcon.style.cursor = menu.is_available ? 'pointer' : 'not-allowed';
+                    updateIcon.style.opacity = menu.is_available ? 1 : 0.5;
+                    updateIcon.title = menu.is_available ? 'Edit Menu Item' : 'Cannot edit unavailable item';
+                    updateIcon.onclick = () => {
+                        if (menu.is_available) openUpdateMenuPopup(menu);
+                    };
                     actionsCell.appendChild(updateIcon);
 
                     const deleteIcon = document.createElement('span');
                     deleteIcon.textContent = '🗑️';
-                    deleteIcon.onclick = () => deleteMenu(menu.menu_id);
+                    deleteIcon.style.cursor = menu.is_available ? 'pointer' : 'not-allowed';
+                    deleteIcon.style.opacity = menu.is_available ? 1 : 0.5;
+                    deleteIcon.title = menu.is_available ? 'Mark as Unavailable' : 'Already Unavailable';
+                    deleteIcon.onclick = () => {
+                        if (menu.is_available) deleteMenu(menu.menu_id);
+                    };
                     actionsCell.appendChild(deleteIcon);
+
+                    // Add Status Cell
+                    const statusCell = row.insertCell();
+                    statusCell.textContent = menu.is_available ? 'Available' : 'Unavailable';
+                    statusCell.style.fontWeight = 'bold';
+                    statusCell.style.color = menu.is_available ? '#90EE90' : '#FF7F7F';
                 });
             })
             .catch(error => {
                 console.error('Error fetching menu details:', error);
                 alert('Failed to load menu details.');
                  const menuTableBody = document.querySelector('#menu-table tbody');
-                menuTableBody.innerHTML = '<tr><td colspan="8">Error loading data.</td></tr>';
+                menuTableBody.innerHTML = '<tr><td colspan="9">Error loading data.</td></tr>';
             });
     }
 
@@ -711,9 +878,193 @@
         loadMenus();
     });
 
+    // Function to handle order cancellation
+    async function cancelOrder(orderId, buttonElement) {
+        if (!confirm(`Are you sure you want to cancel Order ID: ${orderId}? This action cannot be undone.`)) {
+            return;
+        }
+
+        // Disable button immediately to prevent multiple clicks
+        if (buttonElement) buttonElement.disabled = true;
+        
+        try {
+            const response = await fetch(`/api/admin/order/${orderId}`, {
+                method: 'DELETE',
+                headers: {
+                    // Add CSRF token header if needed
+                    'Content-Type': 'application/json' 
+                }
+            });
+            
+            const result = await response.json();
+
+            if (response.ok) {
+                alert(result.message || `Order ${orderId} cancelled.`);
+                // Refresh the page or update the specific row status dynamically
+                location.reload(); // Simple refresh for now
+            } else {
+                 alert(`Error: ${result.error || 'Could not cancel order.'}`);
+                 if (buttonElement) buttonElement.disabled = false; // Re-enable on error
+            }
+
+        } catch (error) {
+            console.error('Error cancelling order:', error);
+            alert('An unexpected error occurred while trying to cancel the order.');
+            if (buttonElement) buttonElement.disabled = false; // Re-enable on error
+        }
+    }
+
+    // --- Review Management JS ---
+    // Updated function signature to accept the clicked element
+    function openUpdateReviewPopup(element) {
+        const popup = document.getElementById('update-review-popup');
+        // Retrieve data from the element's data-* attributes
+        const reviewId = element.dataset.reviewId;
+        const customerName = element.dataset.customerName || 'N/A';
+        const restaurantName = element.dataset.restaurantName || 'N/A';
+        const rating = element.dataset.rating;
+        const comment = element.dataset.comment;
+        
+        document.getElementById('update-review-id').value = reviewId;
+        document.getElementById('popup-review-id').textContent = reviewId;
+        document.getElementById('popup-review-customer').textContent = customerName;
+        document.getElementById('popup-review-restaurant').textContent = restaurantName;
+        document.getElementById('popup-review-rating').textContent = rating;
+        document.getElementById('update-review-comment').value = comment;
+        popup.style.display = 'block';
+    }
+
+    function closeUpdateReviewPopup() {
+        document.getElementById('update-review-popup').style.display = 'none';
+    }
+
+    async function updateReview() {
+        const reviewId = document.getElementById('update-review-id').value;
+        const updatedComment = document.getElementById('update-review-comment').value;
+
+        if (!reviewId || updatedComment.trim() === '') {
+            alert('Comment cannot be empty.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/admin/review/${reviewId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Add CSRF token header if needed
+                },
+                body: JSON.stringify({ comment: updatedComment })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert(result.message || `Review ${reviewId} updated.`);
+                closeUpdateReviewPopup();
+                // Optionally, update the comment in the table dynamically instead of reloading
+                location.reload(); // Simple reload for now
+            } else {
+                 alert(`Error: ${result.error || 'Could not update review.'}`);
+            }
+        } catch (error) {
+            console.error('Error updating review:', error);
+            alert('An unexpected error occurred while updating the review.');
+        }
+    }
+
+    async function deleteReview(reviewId) {
+        if (!confirm(`Are you sure you want to delete Review ID: ${reviewId}? This cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/admin/review/${reviewId}`, {
+                method: 'DELETE',
+                headers: {
+                    // Add CSRF token header if needed
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert(result.message || `Review ${reviewId} deleted.`);
+                // Remove the row from the table dynamically
+                const row = document.getElementById(`review-row-${reviewId}`);
+                if (row) {
+                    row.remove();
+                }
+                // Optionally, check if table body is empty and add 'No reviews' message
+                const tableBody = document.getElementById('reviews-table-body');
+                if (tableBody && tableBody.rows.length === 0) {
+                     tableBody.innerHTML = '<tr><td colspan="6">No reviews found.</td></tr>';
+                }
+            } else {
+                 alert(`Error: ${result.error || 'Could not delete review.'}`);
+            }
+        } catch (error) {
+            console.error('Error deleting review:', error);
+            alert('An unexpected error occurred while deleting the review.');
+        }
+    }
+    // --- End Review Management JS ---
+
   </script>
   <footer>
     <p>&copy; 2025 FoodhubXpress. All rights reserved.</p>
   </footer>
+
+  {# Hamburger Menu Toggle Script - Refined #}
+  <script>
+    const hamburgerButton = document.getElementById('hamburger-button');
+    const navLinks = document.getElementById('nav-link-list');
+    const navElement = document.getElementById('main-nav'); // Get the parent nav element
+    const navLinkItems = navLinks ? navLinks.querySelectorAll('a') : []; // Get all links inside
+
+    function closeMenu() {
+        // Only run if the menu is actually open
+        if (navLinks && hamburgerButton && navLinks.classList.contains('mobile-nav-active')) {
+           console.log('Closing menu...'); // Debugging log
+           navLinks.classList.remove('mobile-nav-active');
+           hamburgerButton.classList.remove('active');
+           hamburgerButton.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    // Ensure elements exist before adding listeners
+    if (hamburgerButton && navLinks && navElement) {
+
+        // Toggle menu on hamburger click (handles both open and close via icon)
+        hamburgerButton.addEventListener('click', (event) => {
+            console.log('Hamburger clicked'); // Debugging log
+            event.stopPropagation(); // Important: Prevent this click from immediately triggering the document listener below
+            const isActive = navLinks.classList.toggle('mobile-nav-active');
+            hamburgerButton.classList.toggle('active', isActive);
+            hamburgerButton.setAttribute('aria-expanded', isActive);
+            console.log('Menu active state:', isActive); // Debugging log
+        });
+
+        // Close menu when a link inside is clicked
+        navLinkItems.forEach(link => {
+            link.addEventListener('click', (event) => {
+                console.log('Nav link clicked:', event.target.href); // Debugging log
+                closeMenu();
+            });
+        });
+
+        // Close menu if clicking outside the nav container
+        document.addEventListener('click', (event) => {
+            // Check if the menu is open AND if the click was outside the <nav> element
+            if (navLinks.classList.contains('mobile-nav-active') && !navElement.contains(event.target)) {
+                 console.log('Clicked outside nav, closing menu.'); // Debugging log
+                 closeMenu();
+            }
+        });
+    } else {
+        console.error('Hamburger menu elements not found!'); // Error if elements are missing
+    }
+  </script>
 </body>
 </html>

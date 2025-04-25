@@ -103,8 +103,18 @@
           height="123"
         />
       </div>
-      <nav>
-        <ul class="nav-links">
+      <nav id="main-nav">
+        <button
+          class="hamburger"
+          id="hamburger-button"
+          aria-label="Toggle menu"
+          aria-expanded="false"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <ul class="nav-links" id="nav-link-list">
           <li><a href="{{ url_for('index') }}">Home</a></li>
           <li><a href="{{ url_for('menu') }}" class="active">Menu</a></li>
           <li><a href="{{ url_for('placeOrder') }}">Order</a></li>
@@ -113,6 +123,11 @@
           {% if current_user.is_authenticated %} {% if current_user.is_admin %}
           <li><a href="{{ url_for('admin') }}">Admin Dashboard</a></li>
           {% endif %}
+          <li>
+            <a href="{{ url_for('profile') }}" title="Edit Profile"
+              >Welcome, {{ current_user.name }}</a
+            >
+          </li>
           <li><a href="{{ url_for('logout') }}">Logout</a></li>
           {% else %}
           <li><a href="{{ url_for('login') }}">Login</a></li>
@@ -134,19 +149,45 @@
     </footer>
 
     <script>
-      function addToOrder(itemName, price) {
-        const item = { itemName, price, quantity: 1 }; // Set default quantity to 1
-
+      function addToOrder(menu_id, restaurant_id, itemName, price) {
         let order = localStorage.getItem("orderItems");
         order = order ? JSON.parse(order) : [];
 
+        // Check if cart is not empty and if the new item is from a different restaurant
+        if (order.length > 0 && order[0].restaurantId !== restaurant_id) {
+          alert(
+            "You can only order from one restaurant at a time. Please clear your cart or complete your current order first."
+          );
+          return;
+        }
+
+        // Check if item already exists, if so, maybe increment quantity (optional)
+        const existingItemIndex = order.findIndex(
+          (item) => item.menuId === menu_id
+        );
+        if (existingItemIndex > -1) {
+          // Option 1: Alert user item is already added
+          alert(`${itemName} is already in your cart.`);
+          // Option 2: Increment quantity (requires updating place-order page too)
+          // order[existingItemIndex].quantity += 1;
+          return; // Or remove this if incrementing
+        }
+
+        // Add new item
+        const item = {
+          menuId: menu_id,
+          restaurantId: restaurant_id,
+          itemName: itemName,
+          price: price,
+          quantity: 1, // Default quantity
+        };
         order.push(item);
         localStorage.setItem("orderItems", JSON.stringify(order));
 
         alert(`${itemName} added to your order.`);
 
         // Redirect to place-order page after adding the item
-        window.location.href = "place-order";
+        window.location.href = "{{ url_for('placeOrder') }}"; // Use url_for for robustness
       }
     </script>
 
@@ -166,6 +207,9 @@
               restaurantName.textContent = restaurant.name;
               restaurantDiv.appendChild(restaurantName);
 
+              // Store restaurant_id for use in addToOrder
+              const current_restaurant_id = restaurant.restaurant_id;
+
               const categoryColumns = document.createElement("div");
               categoryColumns.classList.add("category-columns");
 
@@ -181,7 +225,11 @@
 
                 menu.items.forEach((item) => {
                   const menuItem = document.createElement("li");
-                  menuItem.innerHTML = `${item.item_name} <span>₹${item.price}</span><button class="btn-add" onclick="addToOrder('${item.item_name}', ${item.price})">Add</button>`;
+                  // Escape item_name to prevent issues if it contains quotes
+                  const escapedItemName = item.item_name
+                    .replace(/'/g, "\\'")
+                    .replace(/"/g, '\\"');
+                  menuItem.innerHTML = `${item.item_name} <span>₹${item.price}</span><button class="btn-add" onclick="addToOrder(${item.menu_id}, ${current_restaurant_id}, '${escapedItemName}', ${item.price})">Add</button>`;
                   menuList.appendChild(menuItem);
                 });
 
@@ -198,6 +246,63 @@
             alert("Failed to load restaurant menus.");
           });
       });
+    </script>
+
+    {# Hamburger Menu Toggle Script - Refined #}
+    <script>
+      const hamburgerButton = document.getElementById("hamburger-button");
+      const navLinks = document.getElementById("nav-link-list");
+      const navElement = document.getElementById("main-nav"); // Get the parent nav element
+      const navLinkItems = navLinks ? navLinks.querySelectorAll("a") : []; // Get all links inside
+
+      function closeMenu() {
+        // Only run if the menu is actually open
+        if (
+          navLinks &&
+          hamburgerButton &&
+          navLinks.classList.contains("mobile-nav-active")
+        ) {
+          console.log("Closing menu..."); // Debugging log
+          navLinks.classList.remove("mobile-nav-active");
+          hamburgerButton.classList.remove("active");
+          hamburgerButton.setAttribute("aria-expanded", "false");
+        }
+      }
+
+      // Ensure elements exist before adding listeners
+      if (hamburgerButton && navLinks && navElement) {
+        // Toggle menu on hamburger click (handles both open and close via icon)
+        hamburgerButton.addEventListener("click", (event) => {
+          console.log("Hamburger clicked"); // Debugging log
+          event.stopPropagation(); // Important: Prevent this click from immediately triggering the document listener below
+          const isActive = navLinks.classList.toggle("mobile-nav-active");
+          hamburgerButton.classList.toggle("active", isActive);
+          hamburgerButton.setAttribute("aria-expanded", isActive);
+          console.log("Menu active state:", isActive); // Debugging log
+        });
+
+        // Close menu when a link inside is clicked
+        navLinkItems.forEach((link) => {
+          link.addEventListener("click", (event) => {
+            console.log("Nav link clicked:", event.target.href); // Debugging log
+            closeMenu();
+          });
+        });
+
+        // Close menu if clicking outside the nav container
+        document.addEventListener("click", (event) => {
+          // Check if the menu is open AND if the click was outside the <nav> element
+          if (
+            navLinks.classList.contains("mobile-nav-active") &&
+            !navElement.contains(event.target)
+          ) {
+            console.log("Clicked outside nav, closing menu."); // Debugging log
+            closeMenu();
+          }
+        });
+      } else {
+        console.error("Hamburger menu elements not found!"); // Error if elements are missing
+      }
     </script>
   </body>
 </html>

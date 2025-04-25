@@ -73,8 +73,18 @@
           height="123"
         />
       </div>
-      <nav>
-        <ul class="nav-links">
+      <nav id="main-nav">
+        <button
+          class="hamburger"
+          id="hamburger-button"
+          aria-label="Toggle menu"
+          aria-expanded="false"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <ul class="nav-links" id="nav-link-list">
           <li><a href="{{ url_for('index') }}">Home</a></li>
           <li><a href="{{ url_for('menu') }}">Menu</a></li>
           <li><a href="{{ url_for('placeOrder') }}">Order</a></li>
@@ -85,6 +95,11 @@
           {% if current_user.is_authenticated %} {% if current_user.is_admin %}
           <li><a href="{{ url_for('admin') }}">Admin Dashboard</a></li>
           {% endif %}
+          <li>
+            <a href="{{ url_for('profile') }}" title="Edit Profile"
+              >Welcome, {{ current_user.name }}</a
+            >
+          </li>
           <li><a href="{{ url_for('logout') }}">Logout</a></li>
           {% else %}
           <li><a href="{{ url_for('login') }}">Login</a></li>
@@ -102,53 +117,149 @@
     </div>
 
     <script>
-      function trackOrder() {
-        const enteredId = document.getElementById("orderIdInput").value.trim();
-        const lastOrder = JSON.parse(localStorage.getItem("lastOrder"));
+      const orderDetailsDiv = document.getElementById("orderDetails");
+      const orderIdInput = document.getElementById("orderIdInput");
 
-        if (!enteredId || !lastOrder) {
-          document.getElementById("orderDetails").innerHTML =
-            "<p>Please enter a valid Order ID.</p>";
+      // Function to fetch and display order details from API
+      async function fetchAndDisplayOrder(orderId) {
+        if (!orderId) {
+          orderDetailsDiv.innerHTML = "<p>Please enter an Order ID.</p>";
           return;
         }
 
-        if (enteredId === lastOrder.orderId) {
-          const itemsList = lastOrder.items
-            .map(
-              (item) =>
-                `<li>${item.itemName} x ${item.quantity} = ₹${
-                  item.price * item.quantity
-                }</li>`
-            )
-            .join("");
+        orderDetailsDiv.innerHTML = `<p>🔍 Searching for Order ID: ${orderId}...</p>`;
 
-          document.getElementById("orderDetails").innerHTML = `
-          <p><strong>Order ID:</strong> ${lastOrder.orderId}</p>
-          <p><strong>Name:</strong> ${lastOrder.name}</p>
-          <p><strong>Address:</strong> ${lastOrder.address}</p>
-          <p><strong>Phone:</strong> ${lastOrder.phone}</p>
-          <h4>Items Ordered:</h4>
-          <ul>${itemsList}</ul>
-          <p><strong>Total Amount:</strong> ₹${lastOrder.total}</p>
-          <p><strong>Status:</strong> Preparing your food 🍲</p>
-        `;
-        } else {
-          document.getElementById("orderDetails").innerHTML =
-            "<p>❌ Sorry, we could not find an order with this ID. Please check and try again.</p>";
+        try {
+          const response = await fetch(`/api/trackOrder/${orderId}`); // Use template literal
+          const data = await response.json();
+
+          if (response.ok) {
+            const itemsList = data.items
+              .map(
+                (item) =>
+                  `<li>${item.itemName} x ${item.quantity} = ₹${(
+                    item.price * item.quantity
+                  ).toFixed(2)}</li>`
+              )
+              .join("");
+
+            // Simple status mapping - can be enhanced
+            let statusMessage = data.status;
+            if (data.status === "placed") statusMessage = "Order Placed ✅";
+            else if (data.status === "preparing")
+              statusMessage = "Preparing your food 🍲";
+            else if (data.status === "out_for_delivery")
+              statusMessage = "Out for Delivery 🚚";
+            else if (data.status === "delivered")
+              statusMessage = "Delivered 🎉";
+            else if (data.status === "cancelled")
+              statusMessage = "Cancelled ❌";
+
+            orderDetailsDiv.innerHTML = `
+                      <p><strong>Order ID:</strong> ${data.orderId}</p>
+                      <p><strong>Restaurant:</strong> ${data.restaurantName}</p>
+                      <p><strong>Delivery Address:</strong> ${
+                        data.deliveryAddress
+                      }</p>
+                      <p><strong>Placed Time:</strong> ${new Date(
+                        data.placedTime
+                      ).toLocaleString()}</p>
+                      <h4>Items Ordered:</h4>
+                      <ul>${itemsList}</ul>
+                      <p><strong>Total Amount:</strong> ₹${data.totalPrice.toFixed(
+                        2
+                      )}</p>
+                      <p><strong>Status:</strong> ${statusMessage}</p>
+                  `;
+          } else {
+            orderDetailsDiv.innerHTML = `<p style="color: red;">❌ ${
+              data.error || "Could not find order or access denied."
+            }</p>`;
+          }
+        } catch (error) {
+          console.error("Error fetching order details:", error);
+          orderDetailsDiv.innerHTML = `<p style="color: red;">❌ Error fetching order details. Please try again.</p>`;
         }
       }
 
-      // Autofill last Order ID if redirected from place-order page
+      // Function called by the button click
+      function trackOrder() {
+        const enteredId = orderIdInput.value.trim();
+        fetchAndDisplayOrder(enteredId);
+      }
+
+      // Autofill and fetch if orderId is in URL parameters
       window.onload = () => {
-        const lastOrder = JSON.parse(localStorage.getItem("lastOrder"));
-        if (lastOrder) {
-          document.getElementById("orderIdInput").value = lastOrder.orderId;
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderIdFromUrl = urlParams.get("orderId");
+
+        if (orderIdFromUrl) {
+          orderIdInput.value = orderIdFromUrl;
+          fetchAndDisplayOrder(orderIdFromUrl); // Automatically fetch details
         }
+        // Removed reliance on localStorage ('lastOrder')
       };
     </script>
 
     <footer>
       <p>&copy; 2025 FoodhubXpress. All rights reserved.</p>
     </footer>
+
+    {# Hamburger Menu Toggle Script - Refined #}
+    <script>
+      const hamburgerButton = document.getElementById("hamburger-button");
+      const navLinks = document.getElementById("nav-link-list");
+      const navElement = document.getElementById("main-nav"); // Get the parent nav element
+      const navLinkItems = navLinks ? navLinks.querySelectorAll("a") : []; // Get all links inside
+
+      function closeMenu() {
+        // Only run if the menu is actually open
+        if (
+          navLinks &&
+          hamburgerButton &&
+          navLinks.classList.contains("mobile-nav-active")
+        ) {
+          console.log("Closing menu..."); // Debugging log
+          navLinks.classList.remove("mobile-nav-active");
+          hamburgerButton.classList.remove("active");
+          hamburgerButton.setAttribute("aria-expanded", "false");
+        }
+      }
+
+      // Ensure elements exist before adding listeners
+      if (hamburgerButton && navLinks && navElement) {
+        // Toggle menu on hamburger click (handles both open and close via icon)
+        hamburgerButton.addEventListener("click", (event) => {
+          console.log("Hamburger clicked"); // Debugging log
+          event.stopPropagation(); // Important: Prevent this click from immediately triggering the document listener below
+          const isActive = navLinks.classList.toggle("mobile-nav-active");
+          hamburgerButton.classList.toggle("active", isActive);
+          hamburgerButton.setAttribute("aria-expanded", isActive);
+          console.log("Menu active state:", isActive); // Debugging log
+        });
+
+        // Close menu when a link inside is clicked
+        navLinkItems.forEach((link) => {
+          link.addEventListener("click", (event) => {
+            console.log("Nav link clicked:", event.target.href); // Debugging log
+            closeMenu();
+          });
+        });
+
+        // Close menu if clicking outside the nav container
+        document.addEventListener("click", (event) => {
+          // Check if the menu is open AND if the click was outside the <nav> element
+          if (
+            navLinks.classList.contains("mobile-nav-active") &&
+            !navElement.contains(event.target)
+          ) {
+            console.log("Clicked outside nav, closing menu."); // Debugging log
+            closeMenu();
+          }
+        });
+      } else {
+        console.error("Hamburger menu elements not found!"); // Error if elements are missing
+      }
+    </script>
   </body>
 </html>

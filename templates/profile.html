@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Profile - FoodhubXpress</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <style>
+      /* Use styles similar to register/login for consistency */
+      .profile-section {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(
+          to right,
+          #b1d7ee,
+          #fceff9
+        ); /* Match register page gradient */
+        padding: 2rem;
+      }
+      .profile-form {
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 2rem;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 500px; /* Match register form width */
+        box-shadow: 0 0 20px rgba(255, 182, 193, 0.2);
+      }
+      .profile-form h2 {
+        text-align: center;
+        color: #ffb6c1;
+        margin-bottom: 1.5rem;
+      }
+      .form-group {
+        margin-bottom: 1rem;
+      }
+      .form-group label {
+        display: block;
+        color: #fff;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+      }
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        background-color: #1a1a1a;
+        color: #fff;
+        outline: none;
+        box-sizing: border-box;
+      }
+      .form-group textarea {
+        min-height: 80px;
+      }
+      .form-group input:focus,
+      .form-group textarea:focus {
+        border: 1px solid #87ceeb;
+        box-shadow: 0 0 8px #87ceeb;
+      }
+      .submit-btn {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: 8px;
+        background-color: #87ceeb;
+        color: black;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s ease;
+        margin-top: 1rem;
+      }
+      .submit-btn:hover {
+        background-color: #76bddc;
+        box-shadow: 0 0 12px #87ceeb;
+      }
+      /* Flash message styling (copy from register/login) */
+      .flash-messages {
+        padding: 1rem 0; /* Adjusted padding */
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .flash-messages .alert {
+        /* General alert style */
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        border: 1px solid transparent;
+      }
+      .flash-messages .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-color: #f5c6cb;
+      }
+      .flash-messages .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border-color: #c3e6cb;
+      }
+      .flash-messages .alert-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border-color: #bee5eb;
+      }
+      .flash-messages .alert-warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border-color: #ffeeba;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="logo">
+        <img
+          src="{{ url_for('static', filename='fx.jpg') }}"
+          width="350"
+          height="123"
+        />
+      </div>
+      <nav id="main-nav">
+        <button
+          class="hamburger"
+          id="hamburger-button"
+          aria-label="Toggle menu"
+          aria-expanded="false"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <ul class="nav-links" id="nav-link-list">
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('menu') }}">Menu</a></li>
+          <li><a href="{{ url_for('placeOrder') }}">Order</a></li>
+          <li><a href="{{ url_for('trackOrder') }}">Track Order</a></li>
+          <li><a href="{{ url_for('review') }}">Review</a></li>
+          {% if current_user.is_authenticated %} {% if current_user.is_admin %}
+          <li><a href="{{ url_for('admin') }}">Admin Dashboard</a></li>
+          {% endif %}
+          <li>
+            <a
+              href="{{ url_for('profile') }}"
+              class="active"
+              title="Edit Profile"
+              >Welcome, {{ current_user.name }}</a
+            >
+          </li>
+          <li><a href="{{ url_for('logout') }}">Logout</a></li>
+          {% else %} {# User shouldn't reach here if not logged in due to
+          @login_required #}
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+          <li><a href="{{ url_for('register') }}">Register</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </header>
+
+    <section class="profile-section">
+      <form
+        class="profile-form"
+        method="POST"
+        action="{{ url_for('profile') }}"
+      >
+        <h2>Update Your Profile</h2>
+
+        <!-- Flash Messages -->
+        <div class="flash-messages">
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %} {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %} {% endif %} {% endwith %}
+        </div>
+
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Full Name"
+            required
+            value="{{ current_user.name or '' }}"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Email"
+            required
+            value="{{ current_user.email or '' }}"
+          />
+          <small style="color: #ccc">Changing email affects your login.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            placeholder="Phone number"
+            required
+            value="{{ current_user.phone or '' }}"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="address">Address</label>
+          <textarea
+            id="address"
+            name="address"
+            placeholder="Full Address"
+            required
+          >
+{{ current_user.address or '' }}</textarea
+          >
+        </div>
+
+        {# Add City, State, Pin if they are part of User/Customer model and need
+        update #} {# Example: #} {#
+        <div class="form-group">
+          <label for="city">City</label>
+          <input
+            type="text"
+            id="city"
+            name="city"
+            placeholder="City"
+            value="{{ current_user.city or '' }}"
+          />
+        </div>
+        #} {# Password update is intentionally omitted for simplicity unless
+        specifically requested #} {# It would require current password
+        verification and confirmation field #}
+
+        <button type="submit" class="submit-btn">Update Profile</button>
+      </form>
+    </section>
+
+    <footer>
+      <p>&copy; 2025 FoodhubXpress. All rights reserved.</p>
+    </footer>
+
+    {# Hamburger Menu Toggle Script - Refined #}
+    <script>
+      const hamburgerButton = document.getElementById("hamburger-button");
+      const navLinks = document.getElementById("nav-link-list");
+      const navElement = document.getElementById("main-nav"); // Get the parent nav element
+      const navLinkItems = navLinks ? navLinks.querySelectorAll("a") : []; // Get all links inside
+
+      function closeMenu() {
+        // Only run if the menu is actually open
+        if (
+          navLinks &&
+          hamburgerButton &&
+          navLinks.classList.contains("mobile-nav-active")
+        ) {
+          console.log("Closing menu..."); // Debugging log
+          navLinks.classList.remove("mobile-nav-active");
+          hamburgerButton.classList.remove("active");
+          hamburgerButton.setAttribute("aria-expanded", "false");
+        }
+      }
+
+      // Ensure elements exist before adding listeners
+      if (hamburgerButton && navLinks && navElement) {
+        // Toggle menu on hamburger click (handles both open and close via icon)
+        hamburgerButton.addEventListener("click", (event) => {
+          console.log("Hamburger clicked"); // Debugging log
+          event.stopPropagation(); // Important: Prevent this click from immediately triggering the document listener below
+          const isActive = navLinks.classList.toggle("mobile-nav-active");
+          hamburgerButton.classList.toggle("active", isActive);
+          hamburgerButton.setAttribute("aria-expanded", isActive);
+          console.log("Menu active state:", isActive); // Debugging log
+        });
+
+        // Close menu when a link inside is clicked
+        navLinkItems.forEach((link) => {
+          link.addEventListener("click", (event) => {
+            console.log("Nav link clicked:", event.target.href); // Debugging log
+            closeMenu();
+          });
+        });
+
+        // Close menu if clicking outside the nav container
+        document.addEventListener("click", (event) => {
+          // Check if the menu is open AND if the click was outside the <nav> element
+          if (
+            navLinks.classList.contains("mobile-nav-active") &&
+            !navElement.contains(event.target)
+          ) {
+            console.log("Clicked outside nav, closing menu."); // Debugging log
+            closeMenu();
+          }
+        });
+      } else {
+        console.error("Hamburger menu elements not found!"); // Error if elements are missing
+      }
+    </script>
+  </body>
+</html>
