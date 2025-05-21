@@ -1,0 +1,98 @@
+{% extends 'admin.html' %}
+
+{% block title %}
+  {{ action }} Coupon - Admin
+{% endblock %}
+
+{% block admin_content %}
+  <h2>{{ action }} Coupon</h2>
+  <form method="POST" action="{{ url_for('admin_add_coupon') if action == 'Add' else url_for('admin_edit_coupon', coupon_id=coupon.coupon_id if coupon else None) }}">
+    
+    <label for="coupon_code">Coupon Code: *</label>
+    <input type="text" id="coupon_code" name="coupon_code" value="{{ coupon.coupon_code if coupon else '' }}" required>
+
+    <label for="description">Description:</label>
+    <textarea id="description" name="description">{{ coupon.description if coupon else '' }}</textarea>
+
+    <label for="discount_percent">Discount Percent: *</label>
+    <input type="number" id="discount_percent" name="discount_percent" value="{{ coupon.discount_percent if coupon else '' }}" step="0.01" min="0" max="100" required>
+
+    <label for="max_discount">Max Discount Amount (₹): *</label>
+    <input type="number" id="max_discount" name="max_discount" value="{{ coupon.max_discount if coupon else '' }}" step="0.01" min="0" required>
+
+    <label for="min_order_amount">Minimum Order Amount (₹): *</label>
+    <input type="number" id="min_order_amount" name="min_order_amount" value="{{ coupon.min_order_amount if coupon else '' }}" step="0.01" min="0" required>
+
+    <label for="valid_from">Valid From: *</label>
+    <input type="datetime-local" id="valid_from" name="valid_from" 
+           value="{% if coupon and coupon.valid_from %}{% if coupon.valid_from.year is defined %}{{ coupon.valid_from.strftime('%Y-%m-%dT%H:%M') }}{% else %}{{ coupon.valid_from }}{% endif %}{% endif %}" 
+           required>
+
+    <label for="valid_to">Valid To: *</label>
+    <input type="datetime-local" id="valid_to" name="valid_to" 
+           value="{% if coupon and coupon.valid_to %}{% if coupon.valid_to.year is defined %}{{ coupon.valid_to.strftime('%Y-%m-%dT%H:%M') }}{% else %}{{ coupon.valid_to }}{% endif %}{% endif %}" 
+           required>
+
+    <label for="usage_limit">Usage Limit (Total Times): *</label>
+    <input type="number" id="usage_limit" name="usage_limit" value="{{ coupon.usage_limit if coupon else '100' }}" min="0" required>
+
+    {% if action == 'Edit' %}
+      <label for="times_used">Times Used:</label>
+      <input type="number" id="times_used" name="times_used" value="{{ coupon.times_used if coupon else '0' }}" readonly>
+    {% endif %}
+
+    <label for="restaurant_id">Specific Restaurant (Optional):</label>
+    <select id="restaurant_id" name="restaurant_id">
+      <option value="">-- All Restaurants --</option>
+      {% for restaurant in restaurants %}
+        <option value="{{ restaurant.restaurant_id }}" 
+                {% if coupon and coupon.restaurant_id and coupon.restaurant_id == restaurant.restaurant_id %}selected{% endif %}>
+          {{ restaurant.name }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <label for="customer_id">Specific Customer (Optional):</label>
+    <select id="customer_id" name="customer_id">
+      <option value="">-- All Customers --</option>
+      {% for customer in customers %}
+        <option value="{{ customer.customer_id }}" 
+                {% if coupon and coupon.customer_id and coupon.customer_id == customer.customer_id %}selected{% endif %}>
+          {{ customer.Full_name }} (ID: {{ customer.customer_id }})
+        </option>
+      {% endfor %}
+    </select>
+
+    {% if action == 'Edit' %}
+      <label for="is_active">Is Active:</label>
+      <input type="checkbox" id="is_active" name="is_active" {% if coupon and coupon.is_active %}checked{% endif %}>
+    {% endif %}
+
+    <button type="submit" class="btn">{{ action }} Coupon</button>
+    <a href="{{ url_for('admin_list_coupons') }}" class="btn btn-secondary" style="background-color: #6c757d;">Cancel</a>
+  </form>
+{% endblock %}
+
+<script>
+    // Optional: JavaScript for date validation (valid_to >= valid_from)
+    document.addEventListener('DOMContentLoaded', function() {
+        const validFromInput = document.getElementById('valid_from');
+        const validToInput = document.getElementById('valid_to');
+
+        if(validFromInput && validToInput) {
+            validFromInput.addEventListener('change', function() {
+                if (validToInput.value && validToInput.value < this.value) {
+                    validToInput.value = this.value;
+                }
+                validToInput.min = this.value;
+            });
+            validToInput.addEventListener('change', function() {
+                if (validFromInput.value && this.value < validFromInput.value) {
+                    this.setCustomValidity('Valid To date must be after or same as Valid From date.');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        }
+    });
+</script> 

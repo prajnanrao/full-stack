@@ -92,6 +92,55 @@
       .btn-add:hover {
         background-color: #ff4b3f;
       }
+
+      /* Added from index.html for notification bell */
+      .navbar nav#main-nav {
+        display: flex; /* Use flexbox for alignment */
+        align-items: center; /* Vertically align items */
+        gap: 10px; /* Space between hamburger, bell, and links UL */
+      }
+      #notification-bell-container {
+        position: relative;
+        /* display: flex; Ensure it's a flex item for alignment - REVERTING */
+        /* align-items: center; Align its content (the bell link) vertically - REVERTING */
+      }
+      #notification-bell {
+        color: #ffb6c1;
+        font-size: 1.5rem;
+        text-decoration: none;
+        padding: 10px;
+        display: inline-block;
+      }
+      #notification-bell:hover {
+        color: #87ceeb;
+      }
+      #notification-count {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: red;
+        color: white;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 0.8rem;
+        display: none;
+      }
+      #notification-dropdown {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background-color: #333;
+        color: white;
+        border: 1px solid #555;
+        border-radius: 5px;
+        width: 300px;
+        max-height: 350px;
+        overflow-y: auto;
+        z-index: 1000;
+        padding: 10px;
+        text-align: left;
+      }
     </style>
   </head>
   <body>
@@ -184,10 +233,8 @@
         order.push(item);
         localStorage.setItem("orderItems", JSON.stringify(order));
 
-        alert(`${itemName} added to your order.`);
-
         // Redirect to place-order page after adding the item
-        window.location.href = "{{ url_for('placeOrder') }}"; // Use url_for for robustness
+        window.location.href = "{{ url_for('placeOrder') }}"; // Confirmed correct endpoint
       }
     </script>
 
@@ -304,5 +351,147 @@
         console.error("Hamburger menu elements not found!"); // Error if elements are missing
       }
     </script>
+    {% if current_user.is_authenticated %}
+    <script>
+      // Notification script (copied and adapted from index.html)
+      document.addEventListener("DOMContentLoaded", function () {
+        const mainNav = document.getElementById("main-nav");
+        const hamburgerButton = document.getElementById("hamburger-button");
+
+        if (!mainNav || !hamburgerButton) {
+          console.error(
+            "Main nav or hamburger button not found for notifications (menu.html)."
+          );
+          return;
+        }
+
+        const notificationBellContainer = document.createElement("div");
+        notificationBellContainer.id = "notification-bell-container";
+
+        const notificationBellLink = document.createElement("a");
+        notificationBellLink.href = "#";
+        notificationBellLink.id = "notification-bell";
+        notificationBellLink.innerHTML = "&#128276;";
+
+        const notificationCount = document.createElement("span");
+        notificationCount.id = "notification-count";
+        // Styles applied via CSS block added above
+
+        const notificationDropdown = document.createElement("div");
+        notificationDropdown.id = "notification-dropdown";
+        // Styles applied via CSS block added above
+        notificationDropdown.innerHTML =
+          '<p style="text-align:center; margin:0;">Loading notifications...</p>';
+
+        notificationBellLink.appendChild(notificationCount);
+        notificationBellContainer.appendChild(notificationBellLink);
+        notificationBellContainer.appendChild(notificationDropdown);
+
+        // Insert the bell container into mainNav, BEFORE the hamburger button
+        mainNav.insertBefore(notificationBellContainer, hamburgerButton);
+
+        let notificationsData = [];
+        async function fetchNotifications() {
+          try {
+            const response = await fetch(
+              "{{ url_for('api_get_notifications') }}"
+            );
+            if (!response.ok) {
+              console.error(
+                "Failed to fetch notifications (menu.html):",
+                response.status
+              );
+              notificationDropdown.innerHTML =
+                '<p style="text-align:center; color:red;">Failed to load.</p>';
+              return;
+            }
+            notificationsData = await response.json();
+            renderNotifications(notificationsData);
+          } catch (error) {
+            console.error("Error fetching notifications (menu.html):", error);
+            notificationDropdown.innerHTML =
+              '<p style="text-align:center; color:red;">Error loading.</p>';
+          }
+        }
+
+        function renderNotifications(notifications) {
+          notificationDropdown.innerHTML = "";
+          if (notifications.length === 0) {
+            notificationDropdown.innerHTML =
+              '<p style="text-align:center; margin:10px 0;">No new notifications.</p>';
+            notificationCount.style.display = "none";
+            return;
+          }
+          let unreadCount = 0;
+          notifications.forEach((notif) => {
+            if (!notif.is_read) unreadCount++;
+            const notifDiv = document.createElement("div");
+            notifDiv.style.padding = "8px";
+            notifDiv.style.borderBottom = "1px solid #444";
+            notifDiv.style.fontSize = "0.9rem";
+            if (!notif.is_read) notifDiv.style.fontWeight = "bold";
+            let message = notif.message;
+            if (notif.related_order_id) {
+              message += ` <a href="{{ url_for('trackOrder') }}?orderId=${notif.related_order_id}" style="color: #87ceeb; text-decoration:underline;">View Order</a>`;
+            }
+            notifDiv.innerHTML = message;
+            notifDiv.dataset.id = notif.notification_id;
+            notificationDropdown.appendChild(notifDiv);
+          });
+          if (unreadCount > 0) {
+            notificationCount.textContent = unreadCount;
+            notificationCount.style.display = "block";
+          } else {
+            notificationCount.style.display = "none";
+          }
+        }
+
+        async function markRead(ids) {
+          if (!ids || ids.length === 0) return;
+          try {
+            await fetch("{{ url_for('api_mark_notifications_read') }}", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ids: ids }),
+            });
+            fetchNotifications();
+          } catch (error) {
+            console.error(
+              "Error marking notifications as read (menu.html):",
+              error
+            );
+          }
+        }
+
+        notificationBellLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          const isDropdownVisible =
+            notificationDropdown.style.display === "block";
+          notificationDropdown.style.display = isDropdownVisible
+            ? "none"
+            : "block";
+          if (
+            !isDropdownVisible &&
+            notificationDropdown.style.display === "block" &&
+            notificationsData.length > 0
+          ) {
+            const unreadNotifIds = notificationsData
+              .filter((n) => !n.is_read)
+              .map((n) => n.notification_id);
+            if (unreadNotifIds.length > 0)
+              setTimeout(() => markRead(unreadNotifIds), 2000);
+          }
+        });
+
+        document.addEventListener("click", function (event) {
+          if (!notificationBellContainer.contains(event.target)) {
+            notificationDropdown.style.display = "none";
+          }
+        });
+        fetchNotifications();
+        setInterval(fetchNotifications, 60000);
+      });
+    </script>
+    {% endif %}
   </body>
 </html>

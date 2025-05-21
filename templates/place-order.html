@@ -79,6 +79,53 @@
         /* Prevent cursor change on disabled fields */
         cursor: not-allowed;
       }
+
+      /* Added from index.html for notification bell */
+      .navbar nav#main-nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      #notification-bell-container {
+        position: relative;
+      }
+      #notification-bell {
+        color: #ffb6c1;
+        font-size: 1.5rem;
+        text-decoration: none;
+        padding: 0.5rem;
+        display: inline-block;
+      }
+      #notification-bell:hover {
+        color: #87ceeb;
+      }
+      #notification-count {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: red;
+        color: white;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 0.8rem;
+        display: none;
+      }
+      #notification-dropdown {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background-color: #333;
+        color: white;
+        border: 1px solid #555;
+        border-radius: 5px;
+        width: 300px;
+        max-height: 400px;
+        overflowy: auto;
+        z-index: 1000;
+        padding: 10px;
+        text-align: left;
+      }
     </style>
   </head>
   <body>
@@ -130,6 +177,30 @@
       <h2>Your Order</h2>
       <div id="orderTable"></div>
 
+      {# Prompt for non-logged-in users #} {% if not
+      current_user.is_authenticated %}
+      <div
+        id="login-prompt"
+        style="
+          background-color: rgba(255, 255, 0, 0.1);
+          border: 1px solid yellow;
+          padding: 10px;
+          border-radius: 5px;
+          margin-top: 1rem;
+          text-align: center;
+        "
+      >
+        <p style="color: yellow; font-weight: bold">
+          Please
+          <a href="{{ url_for('login') }}" style="color: #87ceeb">login</a> or
+          <a href="{{ url_for('register') }}" style="color: #87ceeb"
+            >register</a
+          >
+          to place an order.
+        </p>
+      </div>
+      {% endif %} {# Only show customer details and order button if logged in #}
+      {% if current_user.is_authenticated %}
       <h3>Customer Details</h3>
       <label for="name">Name:</label>
       <input type="text" id="name" required disabled />
@@ -142,18 +213,38 @@
         To update your details, please go to your profile page.
       </p>
 
-      <button class="btn" onclick="placeOrder()">Place Order</button>
+      <button
+        class="btn"
+        onclick="placeOrder()"
+        {%
+        if
+        not
+        current_user.is_authenticated
+        %}disabled{%
+        endif
+        %}
+      >
+        Place Order
+      </button>
 
       <div id="orderSummary" style="margin-top: 2rem"></div>
+      {% endif %}
     </div>
 
     <script>
       let orderItems = JSON.parse(localStorage.getItem("orderItems")) || [];
 
+      // Define user-specific details directly using Jinja, ensuring valid JS output
+      const SCRIPT_IS_AUTHENTICATED = {{ current_user.is_authenticated|tojson }};
+      const SCRIPT_CURRENT_USER_NAME = {{ (current_user.name if current_user.is_authenticated else None)|tojson }};
+      const SCRIPT_CURRENT_USER_ADDRESS = {{ (current_user.address if current_user.is_authenticated else None)|tojson }};
+      const SCRIPT_CURRENT_USER_PHONE = {{ (current_user.phone if current_user.is_authenticated else None)|tojson }};
+
       function displayOrderTable() {
         const orderTableDiv = document.getElementById("orderTable");
         if (orderItems.length === 0) {
-          orderTableDiv.innerHTML = "<p>Your order cart is empty. <a href='{{ url_for("menu") }}'>Browse Menus</a></p>";
+          const menuUrl = '{{ url_for("menu") }}';
+          orderTableDiv.innerHTML = '<p>Your order cart is empty. <a href="' + menuUrl + '">Browse Menus</a></p>';
           document.querySelector('.btn[onclick="placeOrder()"]').disabled = true; // Disable place order button
           return;
         }
@@ -230,66 +321,53 @@
 
         if (!name || !address || !phone) {
           alert("Please fill in all customer details (Name, Address, Phone).");
-          // Optional: Add validation feedback styling
           if (!name) nameInput.style.border = "1px solid red"; else nameInput.style.border = "none";
           if (!address) addressInput.style.border = "1px solid red"; else addressInput.style.border = "none";
           if (!phone) phoneInput.style.border = "1px solid red"; else phoneInput.style.border = "none";
           return;
         }
-         // Clear red borders if validation passes
         nameInput.style.border = "none";
         addressInput.style.border = "none";
         phoneInput.style.border = "none";
 
         // Prepare data for API
+        // Note: name, address, and phone are pre-filled from current_user if available,
+        // and these fields are disabled, so we can trust their values.
         const orderData = {
             customerInfo: { name, address, phone },
-            // Map items to include menu_id and quantity
             items: orderItems.map(item => ({ menu_id: item.menuId, quantity: item.quantity })),
             restaurantId: orderItems[0].restaurantId // Assuming all items are from the same restaurant
         };
 
         const orderSummaryDiv = document.getElementById("orderSummary");
-        orderSummaryDiv.innerHTML = `<p>Placing your order...</p>`; // Provide feedback
-        document.querySelector('.btn[onclick="placeOrder()"]').disabled = true; // Disable button during request
+        orderSummaryDiv.innerHTML = `<p>Initiating your order...</p>`;
+        document.querySelector('.btn[onclick="placeOrder()"]').disabled = true;
 
         try {
-            const response = await fetch("{{ url_for('place_order_api') }}", { // Use url_for
+            const response = await fetch("{{ url_for('api_place_order_submission') }}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // Add CSRF token header if needed
                 },
                 body: JSON.stringify(orderData)
             });
 
             const result = await response.json();
 
-            if (response.ok) {
-                const orderId = result.orderId;
-                orderSummaryDiv.innerHTML = `
-                    <h3>Order Placed Successfully!</h3>
-                    <p>Thank you for your order, ${name}!</p>
-                    <p><strong>Your Order ID:</strong> ${orderId}</p>
-                    <p>We have received your order and it's being processed.</p>
-                    <p>You will receive updates via registered contact details.</p>
-                    <button class="btn" onclick="goToTrackOrder(${orderId})">Track Your Order</button>
-                `;
-
-                // Clear the cart from local storage
+            if (response.ok && result.redirectUrl) {
+                // Clear the cart from local storage as order is initiated
                 localStorage.removeItem("orderItems");
-                orderItems = []; // Clear the local variable
-                displayOrderTable(); // Update the table display (will show empty message)
-                // Keep button disabled as order is placed
-
+                orderItems = [];
+                // Redirect to payment selection page
+                window.location.href = result.redirectUrl;
             } else {
-                 orderSummaryDiv.innerHTML = `<p style="color: red;">❌ Error placing order: ${result.error || 'Unknown error'}</p>`;
-                 document.querySelector('.btn[onclick="placeOrder()"]').disabled = false; // Re-enable button on error
+                 orderSummaryDiv.innerHTML = `<p style="color: red;">❌ Error initiating order: ${result.error || 'Unknown error'}</p>`;
+                 document.querySelector('.btn[onclick="placeOrder()"]').disabled = false;
             }
         } catch (error) {
-            console.error('Error placing order:', error);
-            orderSummaryDiv.innerHTML = `<p style="color: red;">❌ Failed to place order. Please check your connection and try again.</p>`;
-            document.querySelector('.btn[onclick="placeOrder()"]').disabled = false; // Re-enable button on error
+            console.error('Error initiating order:', error);
+            orderSummaryDiv.innerHTML = `<p style="color: red;">❌ Failed to initiate order. Please check your connection and try again.</p>`;
+            document.querySelector('.btn[onclick="placeOrder()"]').disabled = false;
         }
       }
 
@@ -303,32 +381,18 @@
 
       // Pre-fill user details if logged in and available
       document.addEventListener('DOMContentLoaded', () => {
-          let userName = null;
-          let userAddress = null;
-          let userPhone = null;
-
-          {% if current_user.is_authenticated %}
-              // Use Jinja's `if` and check for attribute existence and non-empty value
-              {% if current_user.name %}
-              userName = {{ current_user.name|tojson }};
-              {% endif %}
-              // {% if current_user.address and current_user.address != None %}
-              userAddress = {{ current_user.address|tojson }};
-              {% endif %}
-              // {% if current_user.phone and current_user.phone != None %}
-              userPhone = {{ current_user.phone|tojson }};
-              {% endif %}
-          {% endif %}
-
-          if (userName) {
-              document.getElementById('name').value = userName;
+          // Use the pre-defined script-level constants
+          if (SCRIPT_IS_AUTHENTICATED) {
+              if (SCRIPT_CURRENT_USER_NAME !== null) {
+                  document.getElementById('name').value = SCRIPT_CURRENT_USER_NAME;
+              }
+              // Note: input.value = null is fine and typically clears the field or shows 'null'
+              // Depending on browser, explicitly setting to '' for null might be preferred if 'null' string appears.
+              document.getElementById('address').value = SCRIPT_CURRENT_USER_ADDRESS !== null ? SCRIPT_CURRENT_USER_ADDRESS : '';
+              document.getElementById('phone').value = SCRIPT_CURRENT_USER_PHONE !== null ? SCRIPT_CURRENT_USER_PHONE : '';
           }
-          if (userAddress) {
-              document.getElementById('address').value = userAddress;
-          }
-          if (userPhone) {
-              document.getElementById('phone').value = userPhone;
-          }
+          // If not authenticated, the fields (name, address, phone) remain as defined in HTML:
+          // they are disabled and will be empty.
 
           displayOrderTable(); // Initial display
       });
@@ -341,57 +405,189 @@
     <script>
       const hamburgerButton = document.getElementById("hamburger-button");
       const navLinks = document.getElementById("nav-link-list");
-      const navElement = document.getElementById("main-nav"); // Get the parent nav element
-      const navLinkItems = navLinks ? navLinks.querySelectorAll("a") : []; // Get all links inside
+      const navElement = document.getElementById("main-nav");
+      const navLinkItems = navLinks ? navLinks.querySelectorAll("a") : [];
 
       function closeMenu() {
-        // Only run if the menu is actually open
         if (
           navLinks &&
           hamburgerButton &&
           navLinks.classList.contains("mobile-nav-active")
         ) {
-          console.log("Closing menu..."); // Debugging log
           navLinks.classList.remove("mobile-nav-active");
           hamburgerButton.classList.remove("active");
           hamburgerButton.setAttribute("aria-expanded", "false");
         }
       }
 
-      // Ensure elements exist before adding listeners
       if (hamburgerButton && navLinks && navElement) {
-        // Toggle menu on hamburger click (handles both open and close via icon)
         hamburgerButton.addEventListener("click", (event) => {
-          console.log("Hamburger clicked"); // Debugging log
-          event.stopPropagation(); // Important: Prevent this click from immediately triggering the document listener below
+          event.stopPropagation();
           const isActive = navLinks.classList.toggle("mobile-nav-active");
           hamburgerButton.classList.toggle("active", isActive);
           hamburgerButton.setAttribute("aria-expanded", isActive);
-          console.log("Menu active state:", isActive); // Debugging log
         });
 
-        // Close menu when a link inside is clicked
         navLinkItems.forEach((link) => {
-          link.addEventListener("click", (event) => {
-            console.log("Nav link clicked:", event.target.href); // Debugging log
+          link.addEventListener("click", () => {
             closeMenu();
           });
         });
 
-        // Close menu if clicking outside the nav container
         document.addEventListener("click", (event) => {
-          // Check if the menu is open AND if the click was outside the <nav> element
           if (
             navLinks.classList.contains("mobile-nav-active") &&
             !navElement.contains(event.target)
           ) {
-            console.log("Clicked outside nav, closing menu."); // Debugging log
             closeMenu();
           }
         });
       } else {
-        console.error("Hamburger menu elements not found!"); // Error if elements are missing
+        console.error("Hamburger menu elements not found! (place-order.html)");
       }
     </script>
+    {% if current_user.is_authenticated %}
+    <script>
+      // Notification script (copied and adapted from index.html)
+      document.addEventListener("DOMContentLoaded", function () {
+        const mainNav = document.getElementById("main-nav");
+        const hamburgerButton = document.getElementById("hamburger-button");
+
+        if (!mainNav || !hamburgerButton) {
+          console.error(
+            "Main nav or hamburger button not found for notifications (place-order.html)."
+          );
+          return;
+        }
+
+        const notificationBellContainer = document.createElement("div");
+        notificationBellContainer.id = "notification-bell-container";
+
+        const notificationBellLink = document.createElement("a");
+        notificationBellLink.href = "#";
+        notificationBellLink.id = "notification-bell";
+        notificationBellLink.innerHTML = "&#128276;";
+
+        const notificationCount = document.createElement("span");
+        notificationCount.id = "notification-count";
+
+        const notificationDropdown = document.createElement("div");
+        notificationDropdown.id = "notification-dropdown";
+        notificationDropdown.innerHTML =
+          '<p style="text-align:center; margin:0;">Loading notifications...</p>';
+
+        notificationBellLink.appendChild(notificationCount);
+        notificationBellContainer.appendChild(notificationBellLink);
+        notificationBellContainer.appendChild(notificationDropdown);
+
+        // Insert the bell container into mainNav, BEFORE the hamburger button
+        mainNav.insertBefore(notificationBellContainer, hamburgerButton);
+
+        let notificationsData = [];
+        async function fetchNotifications() {
+          try {
+            const response = await fetch(
+              "{{ url_for('api_get_notifications') }}"
+            );
+            if (!response.ok) {
+              console.error(
+                "Failed to fetch notifications (place-order.html):",
+                response.status
+              );
+              notificationDropdown.innerHTML =
+                '<p style="text-align:center; color:red;">Failed to load.</p>';
+              return;
+            }
+            notificationsData = await response.json();
+            renderNotifications(notificationsData);
+          } catch (error) {
+            console.error(
+              "Error fetching notifications (place-order.html):",
+              error
+            );
+            notificationDropdown.innerHTML =
+              '<p style="text-align:center; color:red;">Error loading.</p>';
+          }
+        }
+
+        function renderNotifications(notifications) {
+          notificationDropdown.innerHTML = "";
+          if (notifications.length === 0) {
+            notificationDropdown.innerHTML =
+              '<p style="text-align:center; margin:10px 0;">No new notifications.</p>';
+            notificationCount.style.display = "none";
+            return;
+          }
+          let unreadCount = 0;
+          notifications.forEach((notif) => {
+            if (!notif.is_read) unreadCount++;
+            const notifDiv = document.createElement("div");
+            notifDiv.style.padding = "8px";
+            notifDiv.style.borderBottom = "1px solid #444";
+            notifDiv.style.fontSize = "0.9rem";
+            if (!notif.is_read) notifDiv.style.fontWeight = "bold";
+            let message = notif.message;
+            if (notif.related_order_id) {
+              message += ` <a href="{{ url_for('trackOrder') }}?orderId=${notif.related_order_id}" style="color: #87ceeb; text-decoration:underline;">View Order</a>`;
+            }
+            notifDiv.innerHTML = message;
+            notifDiv.dataset.id = notif.notification_id;
+            notificationDropdown.appendChild(notifDiv);
+          });
+          if (unreadCount > 0) {
+            notificationCount.textContent = unreadCount;
+            notificationCount.style.display = "block";
+          } else {
+            notificationCount.style.display = "none";
+          }
+        }
+
+        async function markRead(ids) {
+          if (!ids || ids.length === 0) return;
+          try {
+            await fetch("{{ url_for('api_mark_notifications_read') }}", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ids: ids }),
+            });
+            fetchNotifications();
+          } catch (error) {
+            console.error(
+              "Error marking notifications as read (place-order.html):",
+              error
+            );
+          }
+        }
+
+        notificationBellLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          const isDropdownVisible =
+            notificationDropdown.style.display === "block";
+          notificationDropdown.style.display = isDropdownVisible
+            ? "none"
+            : "block";
+          if (
+            !isDropdownVisible &&
+            notificationDropdown.style.display === "block" &&
+            notificationsData.length > 0
+          ) {
+            const unreadNotifIds = notificationsData
+              .filter((n) => !n.is_read)
+              .map((n) => n.notification_id);
+            if (unreadNotifIds.length > 0)
+              setTimeout(() => markRead(unreadNotifIds), 2000);
+          }
+        });
+
+        document.addEventListener("click", function (event) {
+          if (!notificationBellContainer.contains(event.target)) {
+            notificationDropdown.style.display = "none";
+          }
+        });
+        fetchNotifications();
+        setInterval(fetchNotifications, 60000);
+      });
+    </script>
+    {% endif %}
   </body>
 </html>

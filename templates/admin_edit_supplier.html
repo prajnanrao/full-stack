@@ -1,0 +1,59 @@
+{% extends 'admin.html' %} 
+
+{% block title %}Admin - {{ action }} Supplier{% endblock %}
+
+{% block admin_content %}
+<div class="container mt-4">
+    <h2>{{ action }} Supplier</h2>
+
+    <form method="POST" action="{{ url_for(request.endpoint, supplier_id=supplier_id) if supplier_id else url_for(request.endpoint) }}">
+        <div class="form-group">
+            <label for="name">Supplier Name*</label>
+            <input type="text" id="name" name="name" value="{{ supplier.name if supplier else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="contact_person">Contact Person*</label>
+            <input type="text" id="contact_person" name="contact_person" value="{{ supplier.contact_person if supplier else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email*</label>
+            <input type="email" id="email" name="email" value="{{ supplier.email if supplier else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label for="phone">Phone Number*</label>
+            <input type="tel" id="phone" name="phone" value="{{ supplier.phone if supplier else '' }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="vehicle_number">Vehicle Number*</label>
+            <input type="text" id="vehicle_number" name="vehicle_number" value="{{ supplier.vehicle_number if supplier else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label for="supply_type">Supply Type*</label>
+            <select id="supply_type" name="supply_type" required>
+                <option value="" disabled {% if not supplier or not supplier.supply_type %}selected{% endif %}>Select Type</option>
+                <option value="ingredients" {% if supplier and supplier.supply_type == 'ingredients' %}selected{% endif %}>Ingredients</option>
+                <option value="packaging" {% if supplier and supplier.supply_type == 'packaging' %}selected{% endif %}>Packaging</option>
+                <option value="equipment" {% if supplier and supplier.supply_type == 'equipment' %}selected{% endif %}>Equipment</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="assigned_orders">Assigned Orders (Informational)</label>
+            <input type="number" id="assigned_orders" name="assigned_orders" value="{{ supplier.assigned_orders if supplier else 0 }}" min="0">
+        </div>
+
+        {% if action == 'Edit' %}
+        <div class="form-group form-check">
+            <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="true" {% if supplier and supplier.is_active %}checked{% endif %}>
+            <label class="form-check-label" for="is_active">Active</label>
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary">{{ action }} Supplier</button>
+        <a href="{{ url_for('admin_list_suppliers') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %} 

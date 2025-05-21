@@ -1,0 +1,68 @@
+{% extends 'admin.html' %} <!-- Assuming admin.html is your base admin template -->
+
+{% block title %}Admin - {{ action }} Staff Member{% endblock %}
+
+{% block admin_content %}
+<div class="container mt-4">
+    <h2>{{ action }} Staff Member</h2>
+
+    <form method="POST" action="{{ url_for(request.endpoint, staff_id=staff_id) if staff_id else url_for(request.endpoint) }}">
+        <div class="form-group">
+            <label for="restaurant_id">Restaurant*</label>
+            <select id="restaurant_id" name="restaurant_id" required>
+                <option value="" disabled {% if not staff_member or not staff_member.restaurant_id %}selected{% endif %}>Select Restaurant</option>
+                {% for restaurant in restaurants %}
+                    <option value="{{ restaurant.restaurant_id }}" 
+                            {% if staff_member and staff_member.restaurant_id == restaurant.restaurant_id %}selected{% endif %}>
+                        {{ restaurant.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="first_name">First Name*</label>
+            <input type="text" id="first_name" name="first_name" value="{{ staff_member.first_name if staff_member else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label for="last_name">Last Name*</label>
+            <input type="text" id="last_name" name="last_name" value="{{ staff_member.last_name if staff_member else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email*</label>
+            <input type="email" id="email" name="email" value="{{ staff_member.email if staff_member else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="phone">Phone Number*</label>
+            <input type="tel" id="phone" name="phone" value="{{ staff_member.phone if staff_member else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="role">Role*</label>
+            <select id="role" name="role" required>
+                <option value="" disabled {% if not staff_member or not staff_member.role %}selected{% endif %}>Select Role</option>
+                <option value="chef" {% if staff_member and staff_member.role == 'chef' %}selected{% endif %}>Chef</option>
+                <option value="manager" {% if staff_member and staff_member.role == 'manager' %}selected{% endif %}>Manager</option>
+                <option value="cashier" {% if staff_member and staff_member.role == 'cashier' %}selected{% endif %}>Cashier</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="shift_timings">Shift Timings</label>
+            <input type="text" id="shift_timings" name="shift_timings" value="{{ staff_member.shift_timings if staff_member and staff_member.shift_timings is not none else '' }}">
+        </div>
+
+        {% if action == 'Edit' %}
+        <div class="form-group form-check">
+            <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="true" {% if staff_member and staff_member.is_active %}checked{% endif %}>
+            <label class="form-check-label" for="is_active">Active</label>
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary">{{ action }} Staff</button>
+        <a href="{{ url_for('admin_list_staff') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %} 

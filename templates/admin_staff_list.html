@@ -1,0 +1,94 @@
+{% extends 'admin.html' %}
+<!-- Assuming you have a base admin template -->
+
+{% block title %}Admin - Manage Staff{% endblock %} {% block admin_content %}
+<div class="container mt-4">
+  <h2>Manage Restaurant Staff</h2>
+
+  {# Flash messages removed from here, will be handled by base admin.html #}
+
+  <div class="mb-3">
+    <a href="{{ url_for('admin_add_staff') }}" class="btn"
+      >Add New Staff Member</a
+    >
+  </div>
+
+  <div class="table-responsive-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Restaurant</th>
+          <th>Role</th>
+          <th>Shift Timings</th>
+          <th>Status</th>
+          <th style="min-width: 150px">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if staff_list %} {% for staff in staff_list %}
+        <tr>
+          <td>{{ staff.staff_id }}</td>
+          <td>{{ staff.first_name }} {{ staff.last_name }}</td>
+          <td>{{ staff.email }}</td>
+          <td>{{ staff.phone }}</td>
+          <td>{{ staff.restaurant_name }} (ID: {{ staff.restaurant_id }})</td>
+          <td>{{ staff.role|title }}</td>
+          <td>{{ staff.shift_timings if staff.shift_timings else 'N/A' }}</td>
+          <td>
+            {% if staff.is_active %}
+            <span class="badge badge-success">Active</span>
+            {% else %}
+            <span class="badge badge-secondary">Inactive</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display: flex; gap: 5px; align-items: center">
+              <a
+                href="{{ url_for('admin_edit_staff', staff_id=staff.staff_id) }}"
+                class="btn btn-action btn-primary-custom"
+                >Edit</a
+              >
+              {% if staff.is_active %}
+              <form
+                action="{{ url_for('admin_deactivate_staff', staff_id=staff.staff_id) }}"
+                method="POST"
+                class="form-action-button"
+                style="display: inline-block"
+                onsubmit="return confirm('Are you sure you want to deactivate this staff member?');"
+              >
+                <button type="submit" class="btn btn-action btn-warning-custom">
+                  Deactivate
+                </button>
+              </form>
+              {% else %}
+              <form
+                action="{{ url_for('admin_activate_staff', staff_id=staff.staff_id) }}"
+                method="POST"
+                class="form-action-button"
+                style="display: inline-block"
+                onsubmit="return confirm('Are you sure you want to activate this staff member?');"
+              >
+                <button type="submit" class="btn btn-action btn-success-custom">
+                  Activate
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %} {% else %}
+        <tr>
+          <td colspan="9" class="text-center p-4">
+            No staff members found. You can add one using the button above.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'admin.html' %} {% block title %}Admin - Manage Suppliers{% endblock
+%} {% block admin_content %}
+<div class="container mt-4">
+  <h2>Manage Suppliers</h2>
+
+  <div class="mb-3">
+    <a href="{{ url_for('admin_add_supplier') }}" class="btn"
+      >Add New Supplier</a
+    >
+  </div>
+
+  <div class="table-responsive-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Contact Person</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Vehicle No.</th>
+          <th>Supply Type</th>
+          <th>Assigned Orders</th>
+          <th>Status</th>
+          <th style="min-width: 150px">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if suppliers %} {% for supplier in suppliers %}
+        <tr>
+          <td>{{ supplier.supplier_id }}</td>
+          <td>{{ supplier.name }}</td>
+          <td>{{ supplier.contact_person }}</td>
+          <td>{{ supplier.email }}</td>
+          <td>{{ supplier.phone }}</td>
+          <td>{{ supplier.vehicle_number }}</td>
+          <td>{{ supplier.supply_type|title }}</td>
+          <td>{{ supplier.assigned_orders }}</td>
+          <td>
+            {% if supplier.is_active %}
+            <span class="badge badge-success">Active</span>
+            {% else %}
+            <span class="badge badge-secondary">Inactive</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display: flex; gap: 5px; align-items: center">
+              <a
+                href="{{ url_for('admin_edit_supplier', supplier_id=supplier.supplier_id) }}"
+                class="btn btn-action btn-primary-custom"
+                >Edit</a
+              >
+              <form
+                action="{{ url_for('admin_toggle_supplier_active', supplier_id=supplier.supplier_id) }}"
+                method="POST"
+                class="form-action-button"
+                style="display: inline-block"
+                onsubmit="return confirm('Are you sure you want to change the status of this supplier?');"
+              >
+                <button
+                  type="submit"
+                  class="btn btn-action {{ 'btn-warning-custom' if supplier.is_active else 'btn-success-custom' }}"
+                >
+                  {{ 'Deactivate' if supplier.is_active else 'Activate' }}
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %} {% else %}
+        <tr>
+          <td colspan="10" class="text-center p-4">
+            No suppliers found. You can add one using the button above.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

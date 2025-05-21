@@ -115,6 +115,55 @@
         color: #856404;
         border-color: #ffeeba;
       }
+
+      /* Added from index.html for notification bell */
+      .navbar nav#main-nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      #notification-bell-container {
+        position: relative;
+        /* display: flex; Ensure it's a flex item for alignment - REVERTING */
+        /* align-items: center; Align its content (the bell link) vertically - REVERTING */
+      }
+      #notification-bell {
+        color: #ffb6c1;
+        font-size: 1.5rem;
+        text-decoration: none;
+        padding: 10px;
+        text-align: left;
+      }
+      #notification-bell:hover {
+        color: #87ceeb;
+      }
+      #notification-count {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: red;
+        color: white;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 0.8rem;
+        display: none;
+      }
+      #notification-dropdown {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background-color: #333;
+        color: white;
+        border: 1px solid #555;
+        border-radius: 5px;
+        width: 300px;
+        max-height: 350px; /* Fixed height for scrollability */
+        overflow-y: auto; /* Enable scroll if content exceeds max-height */
+        z-index: 1000;
+        padding: 10px;
+        text-align: left;
+      }
     </style>
   </head>
   <body>
@@ -257,57 +306,189 @@
     <script>
       const hamburgerButton = document.getElementById("hamburger-button");
       const navLinks = document.getElementById("nav-link-list");
-      const navElement = document.getElementById("main-nav"); // Get the parent nav element
-      const navLinkItems = navLinks ? navLinks.querySelectorAll("a") : []; // Get all links inside
+      const navElement = document.getElementById("main-nav");
+      const navLinkItems = navLinks ? navLinks.querySelectorAll("a") : [];
 
       function closeMenu() {
-        // Only run if the menu is actually open
         if (
           navLinks &&
           hamburgerButton &&
           navLinks.classList.contains("mobile-nav-active")
         ) {
-          console.log("Closing menu..."); // Debugging log
           navLinks.classList.remove("mobile-nav-active");
           hamburgerButton.classList.remove("active");
           hamburgerButton.setAttribute("aria-expanded", "false");
         }
       }
 
-      // Ensure elements exist before adding listeners
       if (hamburgerButton && navLinks && navElement) {
-        // Toggle menu on hamburger click (handles both open and close via icon)
         hamburgerButton.addEventListener("click", (event) => {
-          console.log("Hamburger clicked"); // Debugging log
-          event.stopPropagation(); // Important: Prevent this click from immediately triggering the document listener below
+          event.stopPropagation();
           const isActive = navLinks.classList.toggle("mobile-nav-active");
           hamburgerButton.classList.toggle("active", isActive);
           hamburgerButton.setAttribute("aria-expanded", isActive);
-          console.log("Menu active state:", isActive); // Debugging log
         });
 
-        // Close menu when a link inside is clicked
         navLinkItems.forEach((link) => {
-          link.addEventListener("click", (event) => {
-            console.log("Nav link clicked:", event.target.href); // Debugging log
+          link.addEventListener("click", () => {
             closeMenu();
           });
         });
 
-        // Close menu if clicking outside the nav container
         document.addEventListener("click", (event) => {
-          // Check if the menu is open AND if the click was outside the <nav> element
           if (
             navLinks.classList.contains("mobile-nav-active") &&
             !navElement.contains(event.target)
           ) {
-            console.log("Clicked outside nav, closing menu."); // Debugging log
             closeMenu();
           }
         });
       } else {
-        console.error("Hamburger menu elements not found!"); // Error if elements are missing
+        console.error("Hamburger menu elements not found! (profile.html)");
       }
     </script>
+    {% if current_user.is_authenticated %}
+    <script>
+      // Notification script (copied and adapted from index.html)
+      document.addEventListener("DOMContentLoaded", function () {
+        const mainNav = document.getElementById("main-nav");
+        const hamburgerButton = document.getElementById("hamburger-button");
+
+        if (!mainNav || !hamburgerButton) {
+          console.error(
+            "Main nav or hamburger button not found for notifications (profile.html)."
+          );
+          return;
+        }
+
+        const notificationBellContainer = document.createElement("div");
+        notificationBellContainer.id = "notification-bell-container";
+
+        const notificationBellLink = document.createElement("a");
+        notificationBellLink.href = "#";
+        notificationBellLink.id = "notification-bell";
+        notificationBellLink.innerHTML = "&#128276;";
+
+        const notificationCount = document.createElement("span");
+        notificationCount.id = "notification-count";
+
+        const notificationDropdown = document.createElement("div");
+        notificationDropdown.id = "notification-dropdown";
+        notificationDropdown.innerHTML =
+          '<p style="text-align:center; margin:0;">Loading notifications...</p>';
+
+        notificationBellLink.appendChild(notificationCount);
+        notificationBellContainer.appendChild(notificationBellLink);
+        notificationBellContainer.appendChild(notificationDropdown);
+
+        // Insert the bell container into mainNav, BEFORE the hamburger button
+        mainNav.insertBefore(notificationBellContainer, hamburgerButton);
+
+        let notificationsData = [];
+        async function fetchNotifications() {
+          try {
+            const response = await fetch(
+              "{{ url_for('api_get_notifications') }}"
+            );
+            if (!response.ok) {
+              console.error(
+                "Failed to fetch notifications (profile.html):",
+                response.status
+              );
+              notificationDropdown.innerHTML =
+                '<p style="text-align:center; color:red;">Failed to load.</p>';
+              return;
+            }
+            notificationsData = await response.json();
+            renderNotifications(notificationsData);
+          } catch (error) {
+            console.error(
+              "Error fetching notifications (profile.html):",
+              error
+            );
+            notificationDropdown.innerHTML =
+              '<p style="text-align:center; color:red;">Error loading.</p>';
+          }
+        }
+
+        function renderNotifications(notifications) {
+          notificationDropdown.innerHTML = "";
+          if (notifications.length === 0) {
+            notificationDropdown.innerHTML =
+              '<p style="text-align:center; margin:10px 0;">No new notifications.</p>';
+            notificationCount.style.display = "none";
+            return;
+          }
+          let unreadCount = 0;
+          notifications.forEach((notif) => {
+            if (!notif.is_read) unreadCount++;
+            const notifDiv = document.createElement("div");
+            notifDiv.style.padding = "8px";
+            notifDiv.style.borderBottom = "1px solid #444";
+            notifDiv.style.fontSize = "0.9rem";
+            if (!notif.is_read) notifDiv.style.fontWeight = "bold";
+            let message = notif.message;
+            if (notif.related_order_id) {
+              message += ` <a href="{{ url_for('trackOrder') }}?orderId=${notif.related_order_id}" style="color: #87ceeb; text-decoration:underline;">View Order</a>`;
+            }
+            notifDiv.innerHTML = message;
+            notifDiv.dataset.id = notif.notification_id;
+            notificationDropdown.appendChild(notifDiv);
+          });
+          if (unreadCount > 0) {
+            notificationCount.textContent = unreadCount;
+            notificationCount.style.display = "block";
+          } else {
+            notificationCount.style.display = "none";
+          }
+        }
+
+        async function markRead(ids) {
+          if (!ids || ids.length === 0) return;
+          try {
+            await fetch("{{ url_for('api_mark_notifications_read') }}", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ids: ids }),
+            });
+            fetchNotifications();
+          } catch (error) {
+            console.error(
+              "Error marking notifications as read (profile.html):",
+              error
+            );
+          }
+        }
+
+        notificationBellLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          const isDropdownVisible =
+            notificationDropdown.style.display === "block";
+          notificationDropdown.style.display = isDropdownVisible
+            ? "none"
+            : "block";
+          if (
+            !isDropdownVisible &&
+            notificationDropdown.style.display === "block" &&
+            notificationsData.length > 0
+          ) {
+            const unreadNotifIds = notificationsData
+              .filter((n) => !n.is_read)
+              .map((n) => n.notification_id);
+            if (unreadNotifIds.length > 0)
+              setTimeout(() => markRead(unreadNotifIds), 2000);
+          }
+        });
+
+        document.addEventListener("click", function (event) {
+          if (!notificationBellContainer.contains(event.target)) {
+            notificationDropdown.style.display = "none";
+          }
+        });
+        fetchNotifications();
+        setInterval(fetchNotifications, 60000);
+      });
+    </script>
+    {% endif %}
   </body>
 </html>

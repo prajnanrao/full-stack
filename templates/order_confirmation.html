@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Confirmed - FoodhubXpress</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <style>
+      /* Global Styles from index.html - Adjusted for specificity if needed */
+      header {
+        margin-top: 0px;
+        width: 100%;
+        height: 120px; /* Or adjust if logo size changes */
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif; /* Consistent font */
+        background-color: #0d0d0e;
+        color: #dfabdc;
+        font-size: 1rem; /* Base font size from admin.html inputs */
+      }
+
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .navbar {
+        background: linear-gradient(90deg, #000000, #70616a);
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .navbar .logo img {
+        max-height: 100px;
+        width: auto;
+      }
+
+      /* Removed .navbar nav ul li a styles as nav links are removed */
+
+      /* Styles for order_confirmation content, aligned with admin.html */
+      .main-content-area {
+        max-width: 700px;
+        margin: 40px auto;
+        background-color: rgba(
+          0,
+          0,
+          0,
+          0.5
+        ); /* Darker, like admin.html .content */
+        padding: 1.5rem;
+        border-radius: 12px;
+        color: #fff;
+      }
+      .main-content-area h2, /* For potential h2 if added */
+      .main-content-area h5, 
+      .main-content-area .lead {
+        color: #ffb6c1;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        font-weight: 600; /* Consistent with admin.html labels/headings */
+      }
+      .main-content-area .lead {
+        font-size: 1.15rem; /* Slightly larger for lead text */
+      }
+      .order-confirmation-card {
+        background-color: rgba(
+          26,
+          26,
+          26,
+          0.8
+        ); /* Match admin.html form background */
+        padding: 0; /* Card-header and card-body will have padding */
+        border-radius: 8px;
+        margin-bottom: 25px;
+        /* border: 1px solid #444; /* Optional */
+      }
+      .order-confirmation-card .card-header {
+        background-color: #28a745; /* Green for success */
+        padding: 1rem 1.5rem; /* Consistent padding */
+        border-bottom: none; /* Remove border if card has its own */
+        border-top-left-radius: 8px; /* Match card radius */
+        border-top-right-radius: 8px; /* Match card radius */
+      }
+      .order-confirmation-card .card-header h2 {
+        color: #fff;
+        margin-bottom: 0; /* Remove default h2 margin inside header */
+        font-size: 1.75rem; /* Adjust size as needed */
+        font-weight: 600; /* Emphasize header */
+        text-align: center;
+      }
+      .order-confirmation-card .card-body {
+        padding: 1.5rem; /* Consistent padding */
+        font-size: 1rem; /* Base font size for card body text */
+      }
+      .order-confirmation-card .card-body p {
+        color: #ccc; /* Lighter text for paragraphs */
+        line-height: 1.6;
+        text-align: center; /* Center align paragraph text */
+        margin-bottom: 1rem;
+      }
+      .order-confirmation-card .card-body p strong {
+        color: #fff; /* White for strong elements within paragraphs */
+      }
+      .order-confirmation-card .list-group {
+        margin-bottom: 1.5rem; /* Space after list */
+      }
+      .order-confirmation-card .list-group-item {
+        background-color: #333; /* Darker list items */
+        border-color: #444;
+        color: #ccc;
+        padding: 0.75rem 1.25rem; /* Standard padding */
+        font-size: 1rem; /* Consistent font size */
+      }
+      .order-confirmation-card .list-group-item strong {
+        color: #fff;
+        font-weight: 600;
+      }
+      .order-confirmation-card .list-group-item h6 {
+        color: #ffb6c1; /* Sub-heading color */
+        margin-bottom: 0.25rem;
+        font-size: 1rem; /* Consistent with item text */
+        font-weight: 600;
+      }
+      .order-confirmation-card .list-group-item small {
+        color: #aaa; /* Lighter text for details */
+        font-size: 0.9rem; /* Slightly smaller for details */
+      }
+      .order-confirmation-card .badge-info {
+        background-color: #87ceeb;
+        color: black; /* Black text on skyblue bg */
+        font-size: 1rem; /* Match other text */
+        padding: 0.5em 0.8em; /* More padding */
+        font-weight: 600;
+      }
+
+      /* Buttons styled like admin.html buttons */
+      .order-confirmation-card .btn-primary,
+      .order-confirmation-card .btn-secondary {
+        background-color: #87ceeb;
+        color: black;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: bold;
+        transition: 0.3s ease;
+        margin-top: 0.5rem; /* Reduced top margin for buttons in a group */
+        margin-right: 10px; /* Space between buttons */
+      }
+      .order-confirmation-card .btn-primary:hover,
+      .order-confirmation-card .btn-secondary:hover {
+        background-color: #76bddc;
+        box-shadow: 0 0 12px #87ceeb;
+      }
+      .order-confirmation-card .btn-secondary {
+        background-color: #6c757d; /* Standard secondary color */
+        color: white;
+      }
+      .order-confirmation-card .btn-secondary:hover {
+        background-color: #5a6268;
+      }
+
+      .alert {
+        color: #000;
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid transparent;
+        border-radius: 0.25rem;
+      }
+      .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-color: #f5c6cb;
+      }
+      .alert .close {
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1;
+        color: #000;
+        text-shadow: 0 1px 0 #fff;
+        opacity: 0.5;
+      }
+
+      footer {
+        background-color: #000;
+        color: #ffb6c1;
+        text-align: center;
+        padding: 1rem;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+        margin-top: 30px;
+      }
+
+      footer p {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="logo">
+        <img
+          src="{{ url_for('static', filename='fx.jpg') }}"
+          width="350"
+          height="123"
+        />
+      </div>
+      <nav id="main-nav">
+        <!-- Hamburger button and nav links removed -->
+        <!-- Notification bell script will attempt to append here if current_user is authenticated -->
+      </nav>
+    </header>
+
+    <div class="main-content-area">
+      {# Removed the generic flash message block as the success message is now
+      handled directly #} {# {% with messages =
+      get_flashed_messages(with_categories=true) %} ... {% endwith %} #}
+
+      <div class="order-confirmation-card">
+        <div class="card-header bg-success text-white text-center">
+          <h2 class="mb-0">Order Confirmed!</h2>
+        </div>
+        <div class="card-body">
+          {% if payment_success_message %}
+          <p
+            class="lead text-center"
+            style="color: #d4edda; background-color: initial"
+          >
+            <!-- Adjusted styling to be less like an alert -->
+            {{ payment_success_message }}
+          </p>
+          {% endif %} {% if order %}
+          <p class="lead text-center">
+            Thank you for your order, {{ current_user.name }}!
+          </p>
+          <p class="text-center">
+            Your order <strong>#{{ order.order_id }}</strong> from
+            <strong>{{ order.restaurant_name }}</strong> has been successfully
+            placed.
+          </p>
+
+          <h5 class="mt-4 text-center">Order Summary:</h5>
+          <ul class="list-group my-3">
+            <li
+              class="list-group-item d-flex justify-content-between lh-condensed"
+            >
+              <div>
+                <h6 class="my-0">Items</h6>
+                <small class="text-muted">
+                  {{ order.item_summary.replace("; ", ", ") if
+                  order.item_summary else "Items not available" }}
+                </small>
+              </div>
+            </li>
+            <li
+              class="list-group-item d-flex justify-content-between lh-condensed"
+            >
+              <div>
+                <h6 class="my-0">Delivery Address</h6>
+                <small class="text-muted">{{ order.delivery_address }}</small>
+              </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Total Amount Paid</span>
+              <strong>${{ "%.2f"|format(order.final_amount) }}</strong>
+            </li>
+          </ul>
+
+          <p class="text-center">
+            <strong>Current Status:</strong>
+            <span class="badge badge-info"
+              >{{ order.order_status.replace("_", " ").title() }}</span
+            >
+          </p>
+
+          <p class="mt-4 text-center">
+            You will receive notifications regarding your order status. You can
+            also track your order progress.
+          </p>
+
+          <div class="mt-4 text-center">
+            <a
+              href="{{ url_for('trackOrder', orderId=order.order_id if order else None) }}"
+              class="btn btn-primary mr-2"
+              >Track Your Order</a
+            >
+            <a href="{{ url_for('index') }}" class="btn btn-secondary"
+              >Return to Homepage</a
+            >
+          </div>
+          {% else %}
+          <p class="text-danger text-center">
+            There was an issue retrieving your order details. Please check your
+            order history or contact support.
+          </p>
+          <div class="mt-4 text-center">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary"
+              >Go to Homepage</a
+            >
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>&copy; 2025 FoodhubXpress. All rights reserved.</p>
+    </footer>
+
+    {# {% if current_user.is_authenticated %} ... entire script ... {% endif %}
+    #}
+  </body>
+</html>

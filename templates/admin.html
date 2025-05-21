@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
     h1, h2, h3 {
@@ -56,6 +57,9 @@
     input[type="text"],
     input[type="number"],
     input[type="tel"],
+    input[type="email"],
+    input[type="password"],
+    input[type="datetime-local"],
     textarea,
     select {
       width: 100%;
@@ -92,7 +96,7 @@
       font-size: 1rem;
       font-weight: bold;
       transition: 0.3s ease;
-      margin-top: 1rem;
+      /* margin-top: 1rem; */
     }
     button:hover,
     .btn:hover {
@@ -115,6 +119,9 @@
     th {
       background-color: #333;
       color: #ffb6c1;
+      position: sticky;
+      top: 0;
+      z-index: 1;
     }
     tr:nth-child(even) {
       background-color: rgba(255, 255, 255, 0.05);
@@ -161,6 +168,113 @@
     .unavailable-row td span {
         text-decoration: none; /* Remove strikethrough from icons */
     }
+
+    /* New style for scrollable table container */
+    .table-responsive-container {
+      max-height: 500px; /* Adjust as needed */
+      overflow-y: auto;
+      overflow-x: auto; /* Added for horizontal scroll if table is wider */
+      margin-bottom: 1.5rem; /* Space below the container */
+      border: 1px solid #444; /* Optional: to delineate the scroll area */
+      border-radius: 8px; /* Match other rounded corners */
+    }
+    /* Ensure table inside the container can expand if needed for horizontal scroll */
+    .table-responsive-container table {
+        min-width: 800px; /* Example: Adjust if your tables have many columns */
+        /* Or use width: max-content; if supported and desired behavior */
+    }
+
+    /* Added from index.html for notification bell */
+    .navbar nav#main-nav {
+      display: flex; 
+      align-items: center; 
+      gap: 10px; 
+    }
+    #notification-bell-container {
+      position: relative; 
+      /* display: flex; Ensure it's a flex item for alignment - REVERTING */
+      /* align-items: center; Align its content (the bell link) vertically - REVERTING */
+    }
+    #notification-bell {
+      color: #ffb6c1; 
+      font-size: 1.5rem; 
+      text-decoration: none;
+      padding: 10px;
+      display: inline-block; 
+    }
+    #notification-bell:hover {
+      color: #87ceeb; 
+    }
+    #notification-count {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: red;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 0.8rem;
+      display: none; 
+    }
+    #notification-dropdown {
+          display: none;
+          position: absolute;
+          right: 0;
+          top: 100%;
+          background-color: #333;
+          color: white;
+          border: 1px solid #555;
+          border-radius: 5px;
+          width: 300px;
+          max-height: 350px; /* Fixed height for scrollability */
+          overflow-y: auto; /* Enable scroll if content exceeds max-height */
+          z-index: 1000;
+          padding: 10px;
+          text-align: left;
+    }
+
+    /* Custom class for smaller action buttons within tables */
+    .btn-action {
+      padding: 6px 12px; /* Slightly larger than typical btn-sm for better touch targets */
+      font-size: 0.875rem;
+      margin-right: 5px; /* Space between buttons */
+      margin-bottom: 5px; /* Space if they wrap */
+      line-height: 1.5;
+      display: inline-flex; /* Helps with alignment */
+      align-items: center;
+      justify-content: center;
+    }
+    /* Specific colors for action buttons, can be combined with .btn for base styling */
+    .btn.btn-action.btn-primary-custom {
+      background-color: #007bff; /* Bootstrap primary */
+      color: white;
+    }
+    .btn.btn-action.btn-warning-custom {
+      background-color: #ffc107; /* Bootstrap warning */
+      color: black;
+    }
+    .btn.btn-action.btn-danger-custom {
+      background-color: #dc3545; /* Bootstrap danger */
+      color: white;
+    }
+    .btn.btn-action.btn-success-custom {
+      background-color: #198754; /* Bootstrap success */
+      color: white;
+    }
+    .btn.btn-action.btn-info-custom {
+      background-color: #0dcaf0; /* Bootstrap info */
+      color: black;
+    }
+
+    /* New style for forms that only contain action buttons */
+    form.form-action-button {
+      padding: 0;
+      margin: 0;
+      background-color: transparent;
+      box-shadow: none;
+      border-radius: 0;
+      /* display: inline-block; is usually set inline on the form tag itself */
+    }
   </style>
 </head>
 <body>
@@ -196,15 +310,36 @@
   <h1>Admin Dashboard</h1>
 
   <nav class="admin-nav">
-    <a href="#manage-restaurants">Manage Restaurants</a>
-    <a href="#manage-menus-section">Manage Menus</a>
-    <a href="#manage-orders">Manage Orders</a>
-    <a href="#track-order">Track Order</a>
-    <a href="#manage-reviews">Manage Reviews</a>
+    <a href="{{ url_for('admin', _anchor='manage-restaurants') }}">Manage Restaurants</a>
+    <a href="{{ url_for('admin', _anchor='manage-menus-section') }}">Manage Menus</a>
+    <a href="{{ url_for('admin_list_staff') }}">Manage Staff</a>
+    <a href="{{ url_for('admin_list_suppliers') }}">Manage Suppliers</a>
+    <a href="{{ url_for('admin_list_coupons') }}">Manage Coupons</a>
+    <a href="{{ url_for('admin', _anchor='manage-orders') }}">Manage Orders</a>
+    <a href="{{ url_for('admin', _anchor='track-order') }}">Track Order</a>
+    <a href="{{ url_for('admin', _anchor='manage-reviews') }}">Manage Reviews</a>
   </nav>
 
   <div class="content">
+    {# Centered and styled flash messages section #}
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6"> {# Adjust column width as needed #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show mt-3 mb-3" role="alert" style="border: 1px solid #ccc; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+                {{ message }}
+                {# Use Bootstrap 5 class for close button if Bootstrap 5 is used, or standard for BS4 #}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+    </div>
+    {# End of flash messages section #}
 
+    {% block admin_content %}
     <section id="manage-restaurants">
       <h2>Manage Restaurants</h2>
       <form id="add-restaurant-form">
@@ -230,26 +365,28 @@
       </form>
 
       <h3>Existing Restaurants</h3>
-      <table id="restaurants-table">
-        <thead>
-          <tr>
-            <th>Restaurant ID</th>
-            <th>Name</th>
-            <th>Address</th>
-            <th>Phone</th>
-            <th>Cuisine</th>
-            <th>Rating</th>
-            <th>City</th>
-            <th>State</th>
-            <th>Pin</th>
-            <th>Description</th>
-            <th>Actions</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
+      <div class="table-responsive-container">
+        <table id="restaurants-table">
+          <thead>
+            <tr>
+              <th>Restaurant ID</th>
+              <th>Name</th>
+              <th>Address</th>
+              <th>Phone</th>
+              <th>Cuisine</th>
+              <th>Rating</th>
+              <th>City</th>
+              <th>State</th>
+              <th>Pin</th>
+              <th>Description</th>
+              <th>Actions</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section id="manage-menus-section">
@@ -275,83 +412,95 @@
         </form>
 
         <h3>Existing Menu Items</h3>
-        <table id="menu-table">
-          <thead>
-            <tr>
-                <th>Restaurant ID</th>
-                <th>Item Name</th>
-                <th>Description</th>
-                <th>Price</th>
-                <th>Category</th>
-                <th>Available</th>
-                <th>Prep Time</th>
-                <th>Actions</th>
-                <th>Status</th>
-            </tr>
-          </thead>
-           <tbody>
-           </tbody>
-        </table>
+        <div class="table-responsive-container">
+          <table id="menu-table">
+            <thead>
+              <tr>
+                  <th>Restaurant ID</th>
+                  <th>Item Name</th>
+                  <th>Description</th>
+                  <th>Price</th>
+                  <th>Category</th>
+                  <th>Available</th>
+                  <th>Prep Time</th>
+                  <th>Actions</th>
+                  <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
     </section>
 
     <section id="manage-orders">
       <h2>Manage Orders</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Order ID</th>
-            <th>Customer</th>
-            <th>Restaurant</th>
-            <th>Status</th>
-            <th>Placed Time</th>
-            <th>Total Price</th>
-            <th>Delivery Address</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-        {# Check if orders list exists and is not empty #}
-        {% if orders and orders|length > 0 %}
-          {% for order in orders %}
+      <div class="table-responsive-container">
+        <table>
+          <thead>
             <tr>
-              <td>{{ order.order_id }}</td>
-              <td>{{ order.customer_name or ('ID: ' + order.customer_id|string) }}</td> {# Display name or ID #}
-              <td>{{ order.restaurant_name or ('ID: ' + order.restaurant_id|string) }}</td> {# Display name or ID #}
-              <td>{{ order.order_status }}</td>
-              <td>{{ order.order_placed_time.strftime('%Y-%m-%d %H:%M') if order.order_placed_time else 'N/A' }}</td>
-              <td>₹{{ "%.2f"|format(order.total_price) }}</td>
-              <td>{{ order.delivery_address }}</td>
-              <td>
-                {# Note: The form action /update-order-status still exists #}
-                {# It might be better to replace this with JS fetch calls later #}
-                {# Add fragment identifier #manage-orders to the action URL #}
-                <form action="{{ url_for('update_order_status') }}#manage-orders" method="POST" style="background: none; padding: 0; margin:0; box-shadow: none; display: inline-flex; align-items: center; gap: 5px;">
-                  <input type="hidden" name="order_id" value="{{ order.order_id }}">
-                  <select name="status" style="padding: 5px; margin-bottom: 0;">
-                    <option value="placed" {% if order.order_status == 'placed' %}selected{% endif %}>Placed</option>
-                    <option value="preparing" {% if order.order_status == 'preparing' %}selected{% endif %}>Preparing</option>
-                    <option value="out_for_delivery" {% if order.order_status == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>
-                    <option value="delivered" {% if order.order_status == 'delivered' %}selected{% endif %}>Delivered</option>
-                    <option value="cancelled" {% if order.order_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
-                  </select>
-                  <button type="submit" style="margin-top: 0; padding: 5px 10px; font-size: 0.9rem;">Update</button>
-                </form>
-                 {# Add Cancel Button calling JavaScript function #}
-                 <button 
-                    type="button"
-                    onclick="cancelOrder({{ order.order_id }}, this)" 
-                    style="margin-top: 0; padding: 5px 10px; font-size: 0.9rem; background-color: #dc3545; color: white; margin-left: 5px;"
-                    {% if order.order_status == 'delivered' or order.order_status == 'cancelled' %} disabled {% endif %}
-                    >Cancel
-                 </button>
-              </td>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Restaurant</th>
+              <th>Status</th>
+              <th>Placed Time</th>
+              <th>Total Price</th>
+              <th>Delivery Address</th>
+              <th>Action</th>
             </tr>
-          {% endfor %}
-        {% else %}
-            <tr><td colspan="8">No orders found.</td></tr>
-        {% endif %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+          {# Check if orders list exists and is not empty #}
+          {% if orders and orders|length > 0 %}
+            {% for order in orders %}
+              <tr>
+                <td>{{ order.order_id }}</td>
+                <td>{{ order.customer_name or ('ID: ' + order.customer_id|string) }}</td> {# Display name or ID #}
+                <td>{{ order.restaurant_name or ('ID: ' + order.restaurant_id|string) }}</td> {# Display name or ID #}
+                <td>{{ order.order_status }}</td>
+                <td>{{ order.order_placed_time.strftime('%Y-%m-%d %H:%M') if order.order_placed_time else 'N/A' }}</td>
+                <td>
+                  {% if order.applied_coupon_id and order.discount_amount > 0 %}
+                    <span style="text-decoration: line-through;">₹{{ "%.2f"|format(order.total_price) }}</span><br>
+                    <span style="color: red;">-₹{{ "%.2f"|format(order.discount_amount) }}</span><br>
+                    <strong>₹{{ "%.2f"|format(order.final_amount) }}</strong>
+                  {% else %}
+                    ₹{{ "%.2f"|format(order.final_amount) }}
+                  {% endif %}
+                </td>
+                <td>{{ order.delivery_address }}</td>
+                <td>
+                  {# Note: The form action /update-order-status still exists #}
+                  {# It might be better to replace this with JS fetch calls later #}
+                  {# Add fragment identifier #manage-orders to the action URL #}
+                  <form action="{{ url_for('update_order_status') }}#manage-orders" method="POST" style="background: none; padding: 0; margin:0; box-shadow: none; display: inline-flex; align-items: center; gap: 5px;">
+                    <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                    <select name="status" style="padding: 5px; margin-bottom: 0;">
+                      <option value="placed" {% if order.order_status == 'placed' %}selected{% endif %}>Placed</option>
+                      <option value="preparing" {% if order.order_status == 'preparing' %}selected{% endif %}>Preparing</option>
+                      <option value="out_for_delivery" {% if order.order_status == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>
+                      <option value="delivered" {% if order.order_status == 'delivered' %}selected{% endif %}>Delivered</option>
+                      <option value="cancelled" {% if order.order_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                    <button type="submit" style="margin-top: 0; padding: 5px 10px; font-size: 0.9rem;">Update</button>
+                  </form>
+                   {# Add Cancel Button calling JavaScript function #}
+                   <button 
+                      type="button"
+                      onclick="cancelOrder('{{ order.order_id }}', this)" 
+                      style="margin-top: 0; padding: 5px 10px; font-size: 0.9rem; background-color: #dc3545; color: white; margin-left: 5px;"
+                      {% if order.order_status == 'delivered' or order.order_status == 'cancelled' %} disabled {% endif %}
+                      >Cancel
+                   </button>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+              <tr><td colspan="8">No orders found.</td></tr>
+          {% endif %}
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section id="track-order">
@@ -396,51 +545,53 @@
     {# --- Manage Reviews Section --- #}
     <section id="manage-reviews">
       <h2>Manage Reviews</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Customer</th>
-            <th>Restaurant</th>
-            <th>Rating</th>
-            <th>Comment</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="reviews-table-body"> {# Added ID for JS targeting #}
-        {# Check if reviews list exists and is not empty #}
-        {% if reviews and reviews|length > 0 %}
-          {% for review in reviews %}
-            <tr id="review-row-{{ review.review_id }}"> {# Added ID for easier row removal #}
-              <td>{{ review.review_id }}</td>
-              <td>{{ review.customer_name or 'N/A' }}</td>
-              <td>{{ review.restaurant_name or 'N/A' }}</td>
-              <td>{{ review.rating }}★</td>
-              <td>{{ review.comment }}</td>
-              <td>
-                {# Store data in data-* attributes #}
-                <span 
-                    class="edit-review-btn" {# Added class for potential styling/selection #}
-                    data-review-id="{{ review.review_id }}"
-                    data-customer-name="{{ review.customer_name | e }}" {# Use Jinja's escape filter 'e' #}
-                    data-restaurant-name="{{ review.restaurant_name | e }}"
-                    data-rating="{{ review.rating }}"
-                    data-comment="{{ review.comment | e }}"
-                    onclick="openUpdateReviewPopup(this)" {# Pass the element itself #}
-                    style="cursor: pointer; margin-right: 10px;" 
-                    title="Edit Comment">✏️</span>
-                <span onclick="deleteReview({{ review.review_id }})" style="cursor: pointer;" title="Delete Review">🗑️</span>
-              </td>
+      <div class="table-responsive-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Customer</th>
+              <th>Restaurant</th>
+              <th>Rating</th>
+              <th>Comment</th>
+              <th>Actions</th>
             </tr>
-          {% endfor %}
-        {% else %}
-            <tr><td colspan="6">No reviews found.</td></tr>
-        {% endif %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody id="reviews-table-body"> {# Added ID for JS targeting #}
+          {# Check if reviews list exists and is not empty #}
+          {% if reviews and reviews|length > 0 %}
+            {% for review in reviews %}
+              <tr id="review-row-{{ review.review_id }}"> {# Added ID for easier row removal #}
+                <td>{{ review.review_id }}</td>
+                <td>{{ review.customer_name or 'N/A' }}</td>
+                <td>{{ review.restaurant_name or 'N/A' }}</td>
+                <td>{{ review.rating }}★</td>
+                <td>{{ review.comment }}</td>
+                <td>
+                  {# Store data in data-* attributes #}
+                  <span 
+                      class="edit-review-btn" {# Added class for potential styling/selection #}
+                      data-review-id="{{ review.review_id }}"
+                      data-customer-name="{{ review.customer_name | e }}" {# Use Jinja's escape filter 'e' #}
+                      data-restaurant-name="{{ review.restaurant_name | e }}"
+                      data-rating="{{ review.rating }}"
+                      data-comment="{{ review.comment | e }}"
+                      onclick="openUpdateReviewPopup(this)" {# Pass the element itself #}
+                      style="cursor: pointer; margin-right: 10px;" 
+                      title="Edit Comment">✏️</span>
+                  <span onclick="deleteReview('{{ review.review_id }}')" style="cursor: pointer;" title="Delete Review">🗑️</span>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+              <tr><td colspan="6">No reviews found.</td></tr>
+          {% endif %}
+          </tbody>
+        </table>
+      </div>
     </section>
     {# --- End Manage Reviews Section --- #}
-
+    {% endblock admin_content %}
   </div>
 
   <div id="update-popup" class="popup">
@@ -874,8 +1025,17 @@
     }
     
     document.addEventListener('DOMContentLoaded', function() {
-        loadRestaurants();
-        loadMenus();
+        // Only load dashboard-specific data if the main dashboard sections are likely visible.
+        // We can check for the existence of one of the main section containers.
+        if (document.getElementById('manage-restaurants')) {
+            loadRestaurants();
+            loadMenus();
+            // Any other JS initializations specific to the main admin dashboard widgets 
+            // (like populating orders table if it's done via JS, etc.) should also go here.
+        }
+        // The JavaScript for popups (openUpdatePopup, etc.) can remain global as they are 
+        // triggered by elements that might exist on sub-pages if we add such buttons there,
+        // or they simply won't be called if their trigger elements aren't present.
     });
 
     // Function to handle order cancellation
@@ -1016,6 +1176,9 @@
     <p>&copy; 2025 FoodhubXpress. All rights reserved.</p>
   </footer>
 
+  {# Bootstrap JS Bundle (includes Popper) #}
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
   {# Hamburger Menu Toggle Script - Refined #}
   <script>
     const hamburgerButton = document.getElementById('hamburger-button');
@@ -1066,5 +1229,124 @@
         console.error('Hamburger menu elements not found!'); // Error if elements are missing
     }
   </script>
+  {% if current_user.is_authenticated %}
+  <script>
+    // Notification script (copied and adapted from index.html)
+    document.addEventListener("DOMContentLoaded", function () {
+      const mainNav = document.getElementById("main-nav");
+      const hamburgerButton = document.getElementById("hamburger-button");
+      
+      if (!mainNav || !hamburgerButton) {
+        console.error("Main nav or hamburger button not found for notifications (admin.html).");
+        return;
+      }
+
+      const notificationBellContainer = document.createElement("div");
+      notificationBellContainer.id = "notification-bell-container";
+
+      const notificationBellLink = document.createElement("a");
+      notificationBellLink.href = "#";
+      notificationBellLink.id = "notification-bell";
+      notificationBellLink.innerHTML = "&#128276;"; 
+
+      const notificationCount = document.createElement("span");
+      notificationCount.id = "notification-count";
+
+      const notificationDropdown = document.createElement("div");
+      notificationDropdown.id = "notification-dropdown";
+      notificationDropdown.innerHTML =
+        '<p style="text-align:center; margin:0;">Loading notifications...</p>';
+
+      notificationBellLink.appendChild(notificationCount);
+      notificationBellContainer.appendChild(notificationBellLink);
+      notificationBellContainer.appendChild(notificationDropdown);
+
+      // Insert the bell container into mainNav, BEFORE the hamburger button
+      mainNav.insertBefore(notificationBellContainer, hamburgerButton);
+      
+      let notificationsData = [];
+      async function fetchNotifications() {
+        try {
+          const response = await fetch(
+            "{{ url_for('api_get_notifications') }}"
+          );
+          if (!response.ok) {
+            console.error("Failed to fetch notifications (admin.html):", response.status);
+            notificationDropdown.innerHTML = '<p style="text-align:center; color:red;">Failed to load.</p>';
+            return;
+          }
+          notificationsData = await response.json();
+          renderNotifications(notificationsData);
+        } catch (error) {
+          console.error("Error fetching notifications (admin.html):", error);
+          notificationDropdown.innerHTML = '<p style="text-align:center; color:red;">Error loading.</p>';
+        }
+      }
+
+      function renderNotifications(notifications) {
+        notificationDropdown.innerHTML = ""; 
+        if (notifications.length === 0) {
+          notificationDropdown.innerHTML = '<p style="text-align:center; margin:10px 0;">No new notifications.</p>';
+          notificationCount.style.display = "none";
+          return;
+        }
+        let unreadCount = 0;
+        notifications.forEach((notif) => {
+          if (!notif.is_read) unreadCount++;
+          const notifDiv = document.createElement("div");
+          notifDiv.style.padding = "8px";
+          notifDiv.style.borderBottom = "1px solid #444";
+          notifDiv.style.fontSize = "0.9rem";
+          if (!notif.is_read) notifDiv.style.fontWeight = "bold";
+          let message = notif.message;
+          if (notif.related_order_id) {
+            message += ` <a href="{{ url_for('trackOrder') }}?orderId=${notif.related_order_id}" style="color: #87ceeb; text-decoration:underline;">View Order</a>`;
+          }
+          notifDiv.innerHTML = message;
+          notifDiv.dataset.id = notif.notification_id;
+          notificationDropdown.appendChild(notifDiv);
+        });
+        if (unreadCount > 0) {
+          notificationCount.textContent = unreadCount;
+          notificationCount.style.display = "block";
+        } else {
+          notificationCount.style.display = "none";
+        }
+      }
+
+      async function markRead(ids) {
+        if (!ids || ids.length === 0) return;
+        try {
+          await fetch("{{ url_for('api_mark_notifications_read') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: ids }),
+          });
+          fetchNotifications();
+        } catch (error) {
+          console.error("Error marking notifications as read (admin.html):", error);
+        }
+      }
+
+      notificationBellLink.addEventListener("click", (e) => { 
+        e.preventDefault();
+        const isDropdownVisible = notificationDropdown.style.display === "block";
+        notificationDropdown.style.display = isDropdownVisible ? "none" : "block";
+        if (!isDropdownVisible && notificationDropdown.style.display === 'block' && notificationsData.length > 0) { 
+          const unreadNotifIds = notificationsData.filter((n) => !n.is_read).map((n) => n.notification_id);
+          if (unreadNotifIds.length > 0) setTimeout(() => markRead(unreadNotifIds), 2000); 
+        }
+      });
+
+      document.addEventListener("click", function (event) {
+        if (!notificationBellContainer.contains(event.target)) { 
+          notificationDropdown.style.display = "none";
+        }
+      });
+      fetchNotifications(); 
+      setInterval(fetchNotifications, 60000); 
+    });
+  </script>
+  {% endif %}
 </body>
 </html>

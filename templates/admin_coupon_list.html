@@ -1,0 +1,107 @@
+{% extends 'admin.html' %} {% block title %}Admin - Manage Coupons{% endblock %}
+{% block admin_content %}
+<div class="container-fluid mt-4">
+  <h2>Manage Coupons</h2>
+
+  {# Flash messages removed, handled by base admin.html #}
+
+  <div class="mb-3">
+    <a href="{{ url_for('admin_add_coupon') }}" class="btn">Add New Coupon</a>
+  </div>
+
+  <div class="table-responsive-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Code</th>
+          <th>Description</th>
+          <th>Disc. %</th>
+          <th>Max Disc.</th>
+          <th>Valid From</th>
+          <th>Valid To</th>
+          <th>Min. Order</th>
+          <th>Usage Limit</th>
+          <th>Times Used</th>
+          <th>For Restaurant</th>
+          <th>For Customer</th>
+          <th>Status</th>
+          <th style="min-width: 150px">Actions</th>
+          {# Added min-width for actions column #}
+        </tr>
+      </thead>
+      <tbody>
+        {% if coupons %} {% for coupon in coupons %}
+        <tr>
+          <td>{{ coupon.coupon_id }}</td>
+          <td><strong>{{ coupon.coupon_code }}</strong></td>
+          <td>
+            {{ coupon.description|truncate(50) if coupon.description else 'N/A'
+            }}
+          </td>
+          <td>{{ "%.2f"|format(coupon.discount_percent) }}%</td>
+          <td>₹{{ "%.2f"|format(coupon.max_discount) }}</td>
+          <td>
+            {{ coupon.valid_from.strftime('%Y-%m-%d %H:%M') if coupon.valid_from
+            else 'N/A' }}
+          </td>
+          <td>
+            {{ coupon.valid_to.strftime('%Y-%m-%d %H:%M') if coupon.valid_to
+            else 'N/A' }}
+          </td>
+          <td>₹{{ "%.2f"|format(coupon.min_order_amount) }}</td>
+          <td>{{ coupon.usage_limit }}</td>
+          <td>{{ coupon.times_used }}</td>
+          <td>
+            {{ coupon.restaurant_name or (coupon.restaurant_id if
+            coupon.restaurant_id else 'All') }}
+          </td>
+          <td>
+            {{ coupon.customer_name or (coupon.customer_id if coupon.customer_id
+            else 'All') }}
+          </td>
+          <td>
+            {% if coupon.is_active %}
+            <span class="badge badge-success">Active</span>
+            {% else %}
+            <span class="badge badge-secondary">Inactive</span>
+            {% endif %}
+          </td>
+          <td>
+            {# Grouping actions for better layout #}
+            <div style="display: flex; gap: 5px; align-items: center">
+              <a
+                href="{{ url_for('admin_edit_coupon', coupon_id=coupon.coupon_id) }}"
+                class="btn btn-action btn-primary-custom"
+                >Edit</a
+              >
+              <form
+                action="{{ url_for('admin_toggle_coupon_active', coupon_id=coupon.coupon_id) }}"
+                method="POST"
+                class="form-action-button"
+                style="display: inline-block"
+                onsubmit="return confirm('Are you sure you want to change the status of this coupon?');"
+              >
+                <button
+                  type="submit"
+                  class="btn btn-action {{ 'btn-warning-custom' if coupon.is_active else 'btn-success-custom' }}"
+                >
+                  {{ 'Deactivate' if coupon.is_active else 'Activate' }}
+                </button>
+              </form>
+            </div>
+            <!-- Add a delete button if hard delete is desired -->
+          </td>
+        </tr>
+        {% endfor %} {% else %} {# Moved "No coupons found" message here #}
+        <tr>
+          <td colspan="14" class="text-center p-4">
+            No coupons found. You can add one using the button above.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
