@@ -275,6 +275,20 @@
       border-radius: 0;
       /* display: inline-block; is usually set inline on the form tag itself */
     }
+    .cancel-button {
+      margin-top: 0;
+      padding: 5px 10px;
+      font-size: 0.9rem;
+      background-color: #dc3545;
+      color: white;
+      margin-left: 5px;
+      border: none;
+      border-radius: 4px; /* Optional: for better button appearance */
+    }
+    .cancel-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -487,9 +501,9 @@
                    {# Add Cancel Button calling JavaScript function #}
                    <button 
                       type="button"
+                      class="cancel-button"
                       onclick="cancelOrder('{{ order.order_id }}', this)" 
-                      style="margin-top: 0; padding: 5px 10px; font-size: 0.9rem; background-color: #dc3545; color: white; margin-left: 5px;"
-                      {% if order.order_status == 'delivered' or order.order_status == 'cancelled' %} disabled {% endif %}
+                      {% if order.order_status == 'delivered' or order.order_status == 'cancelled' or order.order_status == 'out_for_delivery' %} disabled {% endif %}
                       >Cancel
                    </button>
                 </td>

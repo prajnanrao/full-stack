@@ -1988,5 +1988,63 @@ def admin_delete_review(review_id):
             except Exception as e_close:
                 logging.warning(f"Error closing cursor in admin_delete_review: {e_close}")
 
+@app.route('/api/admin/order/<int:order_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def admin_cancel_order(order_id):
+    cur = None
+    try:
+        cur = mysql.connection.cursor()
+        # Check if the order exists and its current status
+        cur.execute("SELECT order_status FROM Orders WHERE order_id = %s", (order_id,))
+        order_status_tuple = cur.fetchone()
+
+        if not order_status_tuple:
+            return jsonify({'error': 'Order not found'}), 404
+
+        current_status = order_status_tuple[0] # Assuming order_status is the first column
+        print(current_status)
+        # Define cancellable statuses
+        cancellable_statuses = ['placed', 'prepared']
+        
+        if current_status not in cancellable_statuses:
+            return jsonify({'error': f'Order with status "{current_status}" cannot be cancelled. Only orders that are "placed" or "prepared" can be cancelled.'}), 400
+
+        cur.execute("UPDATE Orders SET order_status = 'Cancelled' WHERE order_id = %s", (order_id,))
+        mysql.connection.commit()
+
+        affected_rows = cur.rowcount
+        if affected_rows > 0:
+            # Create a notification for the user
+            try:
+                cur.execute("SELECT customer_id FROM Orders WHERE order_id = %s", (order_id,))
+                customer_id_result = cur.fetchone()
+                if customer_id_result:
+                    # Ensure that you are using the correct index or key if DictCursor is used elsewhere for this cursor
+                    customer_id = customer_id_result[0] if isinstance(customer_id_result, tuple) else customer_id_result['customer_id']
+                    create_notification(
+                        user_id=customer_id,
+                        type='order_cancelled',
+                        message=f'Your order #{order_id} has been cancelled by the administrator.',
+                        related_order_id=order_id
+                    )
+            except Exception as e_notif:
+                logging.error(f"Error creating notification for order cancellation {order_id}: {e_notif}")
+
+            logging.info(f"Admin {current_user.id} cancelled order {order_id}")
+            return jsonify({'message': f'Order {order_id} cancelled successfully'}), 200
+        else:
+            # This case might occur if the status was changed by another process between the SELECT and UPDATE
+            return jsonify({'error': 'Order not found or could not be updated to cancelled status (it might have been updated by another process).'}), 404
+
+    except Exception as e:
+        if cur:
+            mysql.connection.rollback()
+        logging.error(f"Error cancelling order {order_id}: {e}")
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
+    finally:
+        if cur:
+            cur.close()
+
 if __name__ == '__main__':
     app.run(debug=True)
